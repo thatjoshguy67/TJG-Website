@@ -49,6 +49,11 @@ const nextConfig = {
       destination: '/blog/oneui-design-kit',
       permanent: true,
     },
+    {
+      source: '/twidget/privacy-policy',
+      destination: '/blog/twidget-privacy-policy',
+      permanent: true,
+    },
   ],
   headers: async () => [
     {
