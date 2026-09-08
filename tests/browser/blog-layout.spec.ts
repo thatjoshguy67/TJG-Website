@@ -128,6 +128,52 @@ for (const width of [320, 390, 600]) {
   });
 }
 
+test('mobile input waits for expansion and cancels pending focus when dismissed', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await fixture(page);
+  const bar = page.locator('.post-search-bar');
+  const open = page.getByRole('button', { name: 'Open post search' });
+  const input = page.getByRole('combobox', { name: 'Search in post' });
+  await expect(bar).toHaveCSS('width', '56px');
+  await expect(bar).toHaveCSS('backdrop-filter', 'blur(32px) saturate(1.25)');
+  // Pause the real width transition so focus timing is checked independently of speed.
+  await open.evaluate(el => { (el as HTMLElement).click(); });
+  await bar.evaluate(el => {
+    getComputedStyle(el).width;
+    const animation = el.getAnimations().find(animation => (animation as CSSTransition).transitionProperty === 'width')!;
+    (el as HTMLElement & { widthAnimation: Animation }).widthAnimation = animation;
+    animation.pause();
+  });
+  await expect(input).not.toBeFocused();
+  await bar.evaluate(el => {
+    (el as HTMLElement & { widthAnimation: Animation }).widthAnimation.currentTime = 230;
+  });
+  const midway = (await bar.boundingBox())!.width;
+  expect(midway).toBeGreaterThan(56);
+  expect(midway).toBeLessThan(294);
+  await expect(input).not.toBeFocused();
+  await bar.evaluate(el => { (el as HTMLElement & { widthAnimation: Animation }).widthAnimation.finish(); });
+  await expect(input).toBeFocused();
+  await expect(bar).toHaveCSS('width', '294px');
+  await page.keyboard.press('Escape');
+  await expect(bar).toHaveCSS('width', '56px');
+  await open.evaluate(el => { (el as HTMLElement).click(); });
+  await bar.evaluate(el => {
+    getComputedStyle(el).width;
+    const animation = el.getAnimations().find(animation => (animation as CSSTransition).transitionProperty === 'width')!;
+    (el as HTMLElement & { widthAnimation: Animation }).widthAnimation = animation;
+    animation.pause();
+  });
+  await page.keyboard.press('Escape');
+  await bar.evaluate(el => { for (const animation of el.getAnimations()) animation.finish(); });
+  await expect(input).not.toBeFocused();
+  await expect(bar).toHaveCSS('width', '56px');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await open.click();
+  await expect(input).toBeFocused();
+  await expect(bar).toHaveCSS('width', '294px');
+});
+
 test('late article sections update the jump label and button and keyboard visit the same H1 sections', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

@@ -1418,15 +1418,20 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
   .post-search-bar {
     gap: 6px;
     overflow: hidden;
-    transition: width 0.36s cubic-bezier(0.22, 1, 0.36, 1), padding 0.36s cubic-bezier(0.22, 1, 0.36, 1), gap 0.36s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, box-shadow 0.2s ease;
+    transition: width 0.46s cubic-bezier(0.4, 0, 0.2, 1), padding 0.46s cubic-bezier(0.4, 0, 0.2, 1), gap 0.46s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, box-shadow 0.2s ease;
   }
-  .post-search-bar > :not(.post-search-icon) { transition: opacity 0.18s ease; }
-  .post-search-field:not(:focus-within) .post-search-bar {
+  .post-search-bar > :not(.post-search-icon) { transition: opacity 0.16s ease; }
+  .post-search-field[data-mobile-open="true"] .post-search-bar > :not(.post-search-icon) { transition: opacity 0.22s ease 0.1s; }
+  .post-search-field[data-mobile-opening="true"] .post-search-bar > :not(.post-search-icon) { pointer-events: none; }
+  .post-search-field:not(:focus-within):not([data-mobile-open="true"]) .post-search-bar {
     width: 56px;
     padding-inline: 17px;
     gap: 0;
+    background: color-mix(in srgb, var(--container-background) 45%, transparent);
+    -webkit-backdrop-filter: blur(32px) saturate(1.25);
+    backdrop-filter: blur(32px) saturate(1.25);
   }
-  .post-search-field:not(:focus-within) .post-search-bar > :not(.post-search-icon) {
+  .post-search-field:not(:focus-within):not([data-mobile-open="true"]) .post-search-bar > :not(.post-search-icon) {
     opacity: 0;
     pointer-events: none;
   }
@@ -1445,7 +1450,7 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
     pointer-events: auto;
   }
   .post-search-open:focus-visible { outline: 2px solid var(--accent-control); outline-offset: 3px; }
-  .post-search-positioner:has(.post-search-field:focus-within) .post-search-open {
+  .post-search-positioner:has(.post-search-field:focus-within, .post-search-field[data-mobile-open="true"]) .post-search-open {
     visibility: hidden;
     pointer-events: none;
   }

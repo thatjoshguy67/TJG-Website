@@ -97,6 +97,9 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     scrollToHeading(result.target);
   }
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpening, setMobileOpening] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const resultsVisible = searchFocused && searchQuery.trim().length > 0 && resultsQuery === searchQuery;
@@ -112,8 +115,13 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
           return;
         }
         setShortcutOpen(true);
-        inputRef.current?.focus();
-        inputRef.current?.select();
+        if (window.matchMedia('(max-width: 699px)').matches) {
+          setMobileOpen(true);
+          setMobileOpening(true);
+        } else {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        }
         return;
       }
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || isKeyboardInput(event.target)) return;
@@ -134,8 +142,47 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
   }, []);
 
   useEffect(() => {
-    if (shortcutOpen) { inputRef.current?.focus(); inputRef.current?.select(); }
+    if (!shortcutOpen) return;
+    if (window.matchMedia('(max-width: 699px)').matches) {
+      setMobileOpen(true);
+      setMobileOpening(true);
+    } else { inputRef.current?.focus(); inputRef.current?.select(); }
   }, [shortcutOpen]);
+
+  useLayoutEffect(() => {
+    if (!mobileOpen) return;
+    const bar = searchBarRef.current;
+    if (!bar) return;
+    let cancelled = false;
+    const dismiss = () => { setMobileOpen(false); setMobileOpening(false); setShortcutOpen(false); };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !positionerRef.current?.contains(event.target)) dismiss();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); dismiss(); }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    const focusAfterExpansion = async () => {
+      // Read layout to start the CSS transition before checking its completion.
+      // Recheck after cancellation: rotating/resizing can replace a transition.
+      while (!cancelled) {
+        void bar.offsetWidth;
+        const animations = bar.getAnimations().filter(animation => animation.playState !== 'finished');
+        if (!animations.length) break;
+        await Promise.allSettled(animations.map(animation => animation.finished));
+      }
+      if (cancelled) return;
+      setMobileOpening(false);
+      inputRef.current?.focus({ preventScroll: true });
+    };
+    void focusAfterExpansion();
+    return () => {
+      cancelled = true;
+      document.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [mobileOpen]);
 
   useEffect(() => {
     const scope = document.querySelector('.main-content') ?? document.body;
@@ -226,6 +273,8 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
   }, [searchQuery]);
 
   const handleJump = () => {
+    setMobileOpen(false);
+    setMobileOpening(false);
     if (document.activeElement instanceof HTMLElement && document.activeElement.closest('.post-search-field')) {
       document.activeElement.blur();
     }
@@ -261,7 +310,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     <>
       <div className="post-search-anchor" data-shortcut-open={shortcutOpen}>
         <div ref={positionerRef} className="post-search-positioner">
-          <div className="post-search-field">
+          <div className="post-search-field" data-mobile-open={mobileOpen} data-mobile-opening={mobileOpening}>
             {resultsVisible && <div className="post-search-results">
               <div className="post-search-results-title" role="status">{results.length ? 'Relevant sections' : 'No matching sections. Try another word or topic.'}</div>
               <div id="post-search-results" role="listbox" aria-label="Matching sections">
@@ -274,11 +323,8 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               </div>
             </div>}
             <div
+              ref={searchBarRef}
               className="post-search-bar"
-              style={{
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-              }}
             >
               {/* Search icon */}
               <svg
@@ -300,6 +346,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
                 ref={inputRef}
                 type="text"
                 className="post-search-input"
+                tabIndex={mobileOpening ? -1 : undefined}
                 placeholder="Search…"
                 aria-label="Search in post"
                 aria-keyshortcuts="Meta+k Control+k"
@@ -323,7 +370,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
                   }
                 }}
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() => { setSearchFocused(false); setShortcutOpen(false); }}
+                onBlur={() => { setSearchFocused(false); setShortcutOpen(false); setMobileOpen(false); setMobileOpening(false); }}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value.slice(0, 200))}
               />
@@ -365,7 +412,8 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
             type="button"
             className="post-search-open"
             aria-label="Open post search"
-            onClick={() => inputRef.current?.focus()}
+            aria-expanded={mobileOpen || searchFocused}
+            onClick={() => { setMobileOpen(true); setMobileOpening(true); }}
           />
           <ShortcutPopover title={jumpLabel} content={<>
               <span className="shortcut-popover-row"><span>Previous heading or top</span><kbd className="keyboard-shortcut-chip">[</kbd></span>
