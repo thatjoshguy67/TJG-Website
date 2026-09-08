@@ -104,7 +104,7 @@ export default function BlogContent({ content }: BlogContentProps) {
     if (!scope) return;
 
     const features = enhanceBlogMedia(scope);
-    const cleanups: Array<() => void> = [];
+    const cleanups: Array<() => void> = [features.cleanup];
     let cancelled = false;
 
     const loadEnhancers = async () => {

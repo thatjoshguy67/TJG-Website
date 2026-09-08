@@ -1,6 +1,7 @@
 .native-slideshow {
   --native-slideshow-height: clamp(160px, 36vw, 260px);
   --native-slideshow-left-bleed: 0px;
+  --native-slideshow-edge-fade: clamp(24px, 5vw, 40px);
   width: 100%;
   margin: 0;
   font-family: 'One UI Sans', sans-serif;
@@ -8,16 +9,32 @@
 }
 
 .native-slideshow__viewport {
+  --slideshow-start-color: #000;
+  --slideshow-end-color: #000;
+  --slideshow-edge-mask: linear-gradient(to right,
+    var(--slideshow-start-color) var(--native-slideshow-left-bleed),
+    #000 calc(var(--native-slideshow-left-bleed) + var(--native-slideshow-edge-fade)),
+    #000 calc(100% - var(--native-slideshow-right-bleed, 0px) - var(--native-slideshow-edge-fade)),
+    var(--slideshow-end-color) calc(100% - var(--native-slideshow-right-bleed, 0px)));
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  scroll-padding-left: var(--native-slideshow-left-bleed);
+  scroll-padding-left: calc(var(--native-slideshow-left-bleed) + var(--native-slideshow-edge-fade));
+  -webkit-mask-image: var(--slideshow-edge-mask);
+  mask-image: var(--slideshow-edge-mask);
   scrollbar-width: none;
   cursor: grab;
   touch-action: pan-x pan-y pinch-zoom;
   outline: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.native-slideshow__viewport[data-overflow-start] { --slideshow-start-color: transparent; }
+.native-slideshow__viewport[data-overflow-end] { --slideshow-end-color: transparent; }
+
+@media (min-width: 700px) {
+  .native-slideshow { --native-slideshow-edge-fade: clamp(96px, 10vw, 160px); }
 }
 
 .native-slideshow__viewport::-webkit-scrollbar {

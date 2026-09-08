@@ -88,11 +88,35 @@ for (const width of [390, 1440]) {
     }
     await page.evaluate(() => document.body.classList.remove('post-reading-compact'));
     const viewport = page.getByRole('region', { name: 'Image slideshow' });
+    await expect(viewport).not.toHaveAttribute('data-overflow-start');
+    await expect(viewport).toHaveAttribute('data-overflow-end');
+    await expect(viewport).not.toHaveCSS('mask-image', 'none');
     await viewport.focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+    await expect(viewport).toHaveAttribute('data-overflow-start');
     await page.keyboard.press('ArrowLeft');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+    await expect(viewport).not.toHaveAttribute('data-overflow-start');
+    await viewport.evaluate(el => { el.scrollLeft = el.scrollWidth; });
+    await expect(viewport).not.toHaveAttribute('data-overflow-end');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
+
+test('height-capped article images keep their visible corners inside the rounded element', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 600 });
+  await fixture(page);
+  const picture = page.getByRole('img', { name: 'Height capped image' });
+  await picture.scrollIntoViewIfNeeded();
+  await expect.poll(() => picture.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const size = await picture.evaluate(el => {
+    const img = el as HTMLImageElement;
+    const rect = img.getBoundingClientRect();
+    return { ratio: rect.width / rect.height, naturalRatio: img.naturalWidth / img.naturalHeight, height: rect.height };
+  });
+  expect(size.ratio).toBeCloseTo(size.naturalRatio, 2);
+  expect(size.height).toBeLessThanOrEqual(420);
+  await expect(picture).toHaveCSS('border-top-left-radius', '28px');
+  await expect(page.locator('.wp-block-video video')).toHaveCSS('border-top-left-radius', '28px');
+});

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import './NativeSlideshow.css';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface SlideData {
   src: string;
@@ -23,6 +23,25 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
   const activePointerIdRef = useRef<number | null>(null);
   const didDragRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const track = viewport?.firstElementChild;
+    if (!viewport || !track) return;
+    const updateEdges = () => {
+      viewport.toggleAttribute('data-overflow-start', viewport.scrollLeft > 4);
+      viewport.toggleAttribute('data-overflow-end', viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft > 4);
+    };
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(viewport);
+    observer.observe(track);
+    viewport.addEventListener('scroll', updateEdges, { passive: true });
+    updateEdges();
+    return () => {
+      observer.disconnect();
+      viewport.removeEventListener('scroll', updateEdges);
+    };
+  }, [slides]);
 
   if (slides.length === 0) return null;
 

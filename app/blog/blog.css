@@ -144,15 +144,16 @@
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
 }
-.body-text img:not(.ko-compare__img):not(.native-slideshow__img) {
-  max-width: 100% !important;
+.body-text img:not(.ko-compare__img):not(.native-slideshow__img),
+.body-text video {
+  max-width: min(100%, calc(70vh * var(--blog-media-ratio, 100))) !important;
   width: 100% !important;
   height: auto !important;
   max-height: 70vh !important;
   object-fit: contain !important;
   border-radius: var(--br-9xl) !important;
   display: block !important;
-  margin: 12px 0 !important;
+  margin: 12px auto !important;
   padding: 0 !important;
   cursor: pointer;
 }
