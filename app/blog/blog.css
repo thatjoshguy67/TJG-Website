@@ -1221,6 +1221,7 @@ html[data-theme="dark"] .post-search-bar {
 }
 
 .post-search-jump {
+  position: relative;
   pointer-events: auto;
   flex: 0 0 auto;
   min-width: 56px;
@@ -1266,6 +1267,15 @@ html[data-theme="dark"] .post-search-bar {
   overflow: hidden;
   white-space: nowrap;
   transition: opacity 0.18s ease, transform 0.28s ease;
+}
+
+.post-search-jump-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .post-search-jump-label {

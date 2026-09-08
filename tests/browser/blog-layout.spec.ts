@@ -172,6 +172,36 @@ test('toolbar animates its internal widths on focus, blur, and heading changes',
   expect(await sampleTransition()).toHaveLength(0);
 });
 
+test('short heading labels fit without fractional-pixel truncation after resizing or font changes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  const jump = page.locator('.post-search-jump');
+  await expect(jump).not.toHaveAttribute('aria-label', 'Back to top');
+  const heading = page.getByRole('heading', { name: (await jump.getAttribute('aria-label'))!, exact: true });
+  await heading.evaluate(el => { el.id = 'fit-heading'; });
+  const visibleLabel = jump.locator('.post-search-jump-label');
+  const expectFits = async () => expect.poll(() => visibleLabel.evaluate(el => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    return range.getBoundingClientRect().width - el.getBoundingClientRect().width;
+  })).toBeLessThanOrEqual(0);
+  for (const text of ['Overview', 'Research', 'Project Proposal', 'Next']) {
+    await page.locator('#fit-heading').evaluate((el, text) => { el.textContent = text; }, text);
+    await expect(jump).toHaveAttribute('aria-label', text);
+    await expectFits();
+    await page.locator('.post-search-input').focus();
+    await expect(jump).toHaveCSS('width', '56px');
+    await page.locator('.post-search-input').blur();
+    await expectFits();
+  }
+  // A late font change must also resize the measurement while the label is clipped.
+  await page.locator('.post-search-input').focus();
+  await expect(jump).toHaveCSS('width', '56px');
+  await jump.evaluate(el => { el.style.fontSize = '15.3px'; });
+  await page.locator('.post-search-input').blur();
+  await expectFits();
+});
+
 test('one click lands on its intended heading when media changes height during scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await fixture(page);

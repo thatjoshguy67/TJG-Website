@@ -244,9 +244,10 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     const label = jumpLabelRef.current;
     if (!positioner || !label) return;
     // Animate a measured width: intrinsic/auto widths snap when the text changes.
-    // Measure the unclipped label even while the button is icon-only.
+    // Measure an unconstrained copy, including fractional pixels and font changes.
+    // scrollWidth rounds to integers and can make even short labels ellipsize.
     const measure = () => positioner.style.setProperty(
-      '--post-search-jump-width', `${label.scrollWidth + 68}px`
+      '--post-search-jump-width', `${Math.ceil(parseFloat(getComputedStyle(label).width)) + 68}px`
     );
     measure();
     const observer = new ResizeObserver(measure);
@@ -377,6 +378,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               aria-label={jumpLabel}
               aria-describedby={descriptionId}
             >
+              <span ref={jumpLabelRef} className="post-search-jump-measure" aria-hidden="true">{jumpLabel}</span>
               {isBackToTopMode ? (
                 <svg
                   viewBox="0 0 24 24"
@@ -402,7 +404,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
                   <path d="M12 5v14M5 12l7 7 7-7" />
                 </svg>
               )}
-              <span className="post-search-jump-text"><span key={jumpLabel} ref={jumpLabelRef} className="post-search-jump-label">{jumpLabel}</span></span>
+              <span className="post-search-jump-text"><span key={jumpLabel} className="post-search-jump-label">{jumpLabel}</span></span>
             </button>}
             </ShortcutPopover>
         </div>
