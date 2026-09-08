@@ -60,6 +60,8 @@ for (const width of [320, 390, 1440]) {
     const label = jump.locator('.post-search-jump-text');
     await expect(label).not.toHaveText('Back to top');
     expect(await bar.locator('.post-search-jump').count()).toBe(0);
+    const toolbar = page.locator('.post-search-positioner');
+    const toolbarBefore = await toolbar.boundingBox();
     const before = await bar.boundingBox();
     const action = await jump.boundingBox();
     expect(action!.x - (before!.x + before!.width)).toBeGreaterThanOrEqual(7);
@@ -73,8 +75,11 @@ for (const width of [320, 390, 1440]) {
     await expect(jump).toHaveCSS('max-width', '56px');
     await expect(label).toHaveCSS('opacity', '0');
     await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
-    if (width > 320) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
+    if (width >= 700) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
     else expect((await bar.boundingBox())!.width).toBeCloseTo(before!.width, 0);
+    const toolbarAfter = await toolbar.boundingBox();
+    expect(toolbarAfter!.width).toBeCloseTo(toolbarBefore!.width, 0);
+    expect(toolbarAfter!.x).toBeCloseTo(toolbarBefore!.x, 0);
     await input.fill('searchable');
     await expect(page.locator('.post-search-results')).toBeVisible();
     await expect(jump).toHaveAttribute('aria-label', destination!);
@@ -87,6 +92,55 @@ for (const width of [320, 390, 1440]) {
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
   });
 }
+
+test('late article sections update the jump label and button and keyboard visit the same H1 sections', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await fixture(page);
+  await page.addStyleTag({ content: '.main-content { padding-bottom: 100vh !important; }' });
+  const jump = page.locator('.post-search-jump');
+  // Mimic switching from a section list to the combined article after mount.
+  await page.locator('.body-text').first().evaluate(el => { el.innerHTML = '<p>Introduction without headings</p>'; });
+  await expect(jump).toHaveAttribute('aria-label', 'Back to top');
+  await page.locator('.body-text').first().evaluate(el => {
+    el.insertAdjacentHTML('afterend', `<div class="body-text">
+      <div style="height:400px"></div><h2 id="repeated" class="content-heading-h1">First section</h2>
+      <div style="height:400px"></div><h2 class="content-heading-h2">Subheading</h2>
+      <div style="height:400px"></div><h2 id="repeated" class="content-heading-h1">Second section</h2>
+      <div style="height:400px"></div><h2 class="content-heading-h1">Last section</h2></div>`);
+  });
+  await expect(jump).toHaveAttribute('aria-label', 'First section');
+  const toolbar = page.locator('.post-search-positioner');
+  const original = await toolbar.boundingBox();
+  await page.getByRole('heading', { name: 'First section' }).evaluate(el => { el.textContent = 'A much longer first section heading'; });
+  await expect(jump).toHaveAttribute('aria-label', 'A much longer first section heading');
+  expect((await toolbar.boundingBox())!.width).toBeCloseTo(original!.width, 0);
+  expect((await toolbar.boundingBox())!.x).toBeCloseTo(original!.x, 0);
+  await jump.click();
+  await expect(jump).toHaveAttribute('aria-label', 'Second section');
+  await jump.click();
+  await expect.poll(() => page.getByRole('heading', { name: 'Second section', exact: true }).evaluate(el => el.getBoundingClientRect().top)).toBeCloseTo(104, 0);
+  await expect(jump).toHaveAttribute('aria-label', 'Last section');
+  await jump.blur();
+  await page.keyboard.press(']');
+  await expect(jump).toHaveAttribute('aria-label', 'Back to top');
+  await page.keyboard.press('[');
+  await expect(jump).toHaveAttribute('aria-label', 'Last section');
+  await jump.click();
+  await jump.click();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('heading action hover scales with a shadow without fading', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  const jump = page.locator('.post-search-jump');
+  const normalShadow = await jump.evaluate(el => getComputedStyle(el).boxShadow);
+  await jump.hover();
+  await expect(jump).toHaveCSS('opacity', '1');
+  await expect(jump).not.toHaveCSS('box-shadow', normalShadow);
+  await expect.poll(() => jump.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a)).toBeCloseTo(1.035, 3);
+});
 
 test('shortcut border follows the chip as heading labels and search focus change', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

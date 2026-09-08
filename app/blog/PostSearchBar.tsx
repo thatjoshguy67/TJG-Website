@@ -7,7 +7,7 @@ import { rankPostSections, searchWords } from '../../lib/postSearch';
 import { isKeyboardInput } from '../../lib/keyboard';
 import { useReadingPreferences } from './useReadingPreferences';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Include the fading edge of the toolbar blur, not just the buttons.
 function headingJumpOffset() {
@@ -20,16 +20,28 @@ function headingJumpOffset() {
   return bottom + 24;
 }
 
+// The original H1 sections are rendered as H2s for the page hierarchy.
+// Search every content block: combined/portable posts can mount them later.
+function postHeadings() {
+  const visible = Array.from(document.querySelectorAll<HTMLElement>(
+    '.body-text :is(h1,h2,h3,h4,h5,h6)'
+  )).filter(el => el.getClientRects().length > 0 && el.textContent?.trim());
+  const sections = visible.filter(el => el.matches('.content-heading-h1,h1'));
+  return sections.length ? sections : visible.filter(el => el.tagName === 'H2');
+}
+
+function nextPostHeading() {
+  return postHeadings().find(el => el.getBoundingClientRect().top > headingJumpOffset() + 12) ?? null;
+}
+
 interface HeadingInfo {
-  id: string;
+  target: HTMLElement;
   text: string;
 }
 
 export default function PostSearchBar({ enabledByDefault = true }: { enabledByDefault?: boolean }) {
   const { hasSavedPreferences } = useReadingPreferences();
-  const [headings, setHeadings] = useState<HeadingInfo[]>([]);
   const [nextHeading, setNextHeading] = useState<HeadingInfo | null>(null);
-  const [isBackToTop, setIsBackToTop] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [matchCount, setMatchCount] = useState(0);
   const [results, setResults] = useState<{ title: string; excerpt: string; target: HTMLElement }[]>([]);
@@ -64,7 +76,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
       }
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || isKeyboardInput(event.target)) return;
       if (event.key !== '[' && event.key !== ']') return;
-      const headings = Array.from(document.querySelectorAll<HTMLElement>('.body-text h2')).filter(el => el.getClientRects().length > 0);
+      const headings = postHeadings();
       const offset = headingJumpOffset();
       const heading = event.key === ']'
         ? headings.find(el => el.getBoundingClientRect().top > offset + 12)
@@ -83,56 +95,34 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     if (shortcutOpen) { inputRef.current?.focus(); inputRef.current?.select(); }
   }, [shortcutOpen]);
 
-  // Extract h1 headings from .body-text and assign IDs
   useEffect(() => {
-    const id = setTimeout(() => {
-      const bodyText = document.querySelector('.body-text');
-      if (!bodyText) return;
-      const els = bodyText.querySelectorAll('h2');
-      const extracted: HeadingInfo[] = [];
-      els.forEach((el, i) => {
-        const text = el.textContent?.trim() || '';
-        if (!text) return;
-        let elId = el.id;
-        if (!elId) {
-          elId =
-            text
-              .toLowerCase()
-              .replace(/[^\w\s-]/g, '')
-              .replace(/\s+/g, '-')
-              .replace(/-+/g, '-')
-              .trim() || `heading-${i}`;
-          el.id = elId;
-        }
-        extracted.push({ id: elId, text });
-      });
-      setHeadings(extracted);
-    }, 150);
-    return () => clearTimeout(id);
+    const scope = document.querySelector('.main-content') ?? document.body;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const target = nextPostHeading();
+      const text = target?.textContent?.trim() || '';
+      setNextHeading(current => current?.target === target && current?.text === text
+        ? current : target ? { target, text } : null);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    // View changes, streamed content, and media loading can change the next section
+    // without a scroll. Keep the label in sync instead of relying on a mount timer.
+    const mutations = new MutationObserver(schedule);
+    mutations.observe(scope, { childList: true, subtree: true, characterData: true });
+    const resize = new ResizeObserver(schedule);
+    resize.observe(scope);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    schedule();
+    return () => {
+      cancelAnimationFrame(frame);
+      mutations.disconnect();
+      resize.disconnect();
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
   }, []);
-
-  // Update which heading is next based on scroll position
-  const updateNextHeading = useCallback(() => {
-    if (headings.length === 0) return;
-    const scrollPos = window.scrollY + headingJumpOffset() + 12;
-    let found: HeadingInfo | null = null;
-    for (const h of headings) {
-      const el = document.getElementById(h.id);
-      if (el && el.getBoundingClientRect().top + window.scrollY > scrollPos) {
-        found = h;
-        break;
-      }
-    }
-    setNextHeading(found);
-    setIsBackToTop(!found);
-  }, [headings]);
-
-  useEffect(() => {
-    if (headings.length === 0) return;
-    updateNextHeading();
-    window.addEventListener('scroll', updateNextHeading, { passive: true });
-    return () => window.removeEventListener('scroll', updateNextHeading);
-  }, [headings, updateNextHeading]);
 
   useEffect(() => {
     if (!CSS.highlights) return;
@@ -198,19 +188,16 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
       document.activeElement.blur();
     }
     setShortcutOpen(false);
-    if (headings.length === 0 || isBackToTop || !nextHeading) {
-      window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-      return;
-    }
-    const el = document.getElementById(nextHeading.id);
-    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - headingJumpOffset(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    // Resolve from the current DOM as well as keeping the visible label in sync.
+    const target = nextPostHeading();
+    window.scrollTo({
+      top: target ? target.getBoundingClientRect().top + window.scrollY - headingJumpOffset() : 0,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    });
   };
 
-  const jumpLabel =
-    headings.length === 0 || isBackToTop
-      ? 'Back to top'
-      : nextHeading?.text ?? 'Back to top';
-  const isBackToTopMode = headings.length === 0 || isBackToTop;
+  const jumpLabel = nextHeading?.text ?? 'Back to top';
+  const isBackToTopMode = !nextHeading;
 
   if (!enabledByDefault && !hasSavedPreferences && !shortcutOpen) return null;
 

@@ -1095,11 +1095,6 @@ mark.post-search-hl {
   max-width: 640px;
   padding: 0 20px;
   box-sizing: border-box;
-  transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.post-search-positioner:has(.post-search-field:focus-within) {
-  max-width: 860px;
 }
 
 .post-search-field {
@@ -1125,10 +1120,6 @@ mark.post-search-hl {
     max-width: 348px;
     padding: 0;
     margin: 0 auto;
-    transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .post-search-anchor:has(.post-search-field:focus-within) {
-    max-width: 510px;
   }
   .post-search-positioner {
     max-width: none;
@@ -1231,7 +1222,7 @@ html[data-theme="dark"] .post-search-bar {
 
 .post-search-jump {
   pointer-events: auto;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 56px;
   display: flex;
   align-items: center;
@@ -1252,11 +1243,16 @@ html[data-theme="dark"] .post-search-bar {
   white-space: nowrap;
   max-width: min(220px, 45%);
   overflow: hidden;
-  transition: max-width 0.25s ease, padding 0.25s ease, gap 0.25s ease, opacity 0.15s ease;
+  transition: max-width 0.25s ease, padding 0.25s ease, gap 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
   line-height: 1.3;
 }
-.post-search-jump:hover { opacity: 0.85; }
-.post-search-jump:active { opacity: 0.7; }
+@media (hover: hover) and (pointer: fine) {
+  .post-search-jump:hover {
+    transform: scale(1.035);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+}
+.post-search-jump:active { transform: scale(0.98); }
 
 .post-search-jump svg {
   flex-shrink: 0;
@@ -1286,6 +1282,7 @@ html[data-theme="dark"] .post-search-bar {
 
 @media (prefers-reduced-motion: reduce) {
   .post-search-anchor, .post-search-positioner, .post-search-jump, .post-search-jump-text { transition: none; }
+  .post-search-jump:is(:hover, :active) { transform: none; }
 }
 
 
