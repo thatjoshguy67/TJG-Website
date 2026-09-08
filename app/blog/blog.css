@@ -1088,15 +1088,24 @@ mark.post-search-hl {
 
 .post-search-positioner {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  max-width: 480px;
+  max-width: 640px;
   padding: 0 20px;
   box-sizing: border-box;
   transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.post-search-positioner:focus-within {
-  max-width: 760px;
+.post-search-positioner:has(.post-search-field:focus-within) {
+  max-width: 860px;
+}
+
+.post-search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 @media (min-width: 700px) {
@@ -1118,7 +1127,7 @@ mark.post-search-hl {
     margin: 0 auto;
     transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .post-search-anchor:focus-within {
+  .post-search-anchor:has(.post-search-field:focus-within) {
     max-width: 510px;
   }
   .post-search-positioner {
@@ -1132,6 +1141,9 @@ mark.post-search-hl {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  height: 56px;
+  box-sizing: border-box;
   background: color-mix(in srgb, var(--container-background) 85%, transparent);
   border-radius: 999px;
   padding: 12px 14px 12px 20px;
@@ -1164,7 +1176,7 @@ html[data-theme="dark"] .post-search-bar {
 
 .post-search-input {
   flex: 1 1 7ch;
-  min-width: 6ch;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
@@ -1217,34 +1229,30 @@ html[data-theme="dark"] .post-search-bar {
   background: color-mix(in srgb, var(--secondary) 30%, transparent);
 }
 
-.post-search-divider {
-  width: 1px;
-  height: 32px;
-  flex-shrink: 0;
-  background: color-mix(in srgb, var(--secondary) 20%, transparent);
-  margin: 0 2px;
-}
-
 .post-search-jump {
-  flex: 0 3 auto;
-  min-width: 40px;
+  pointer-events: auto;
+  flex: 0 1 auto;
+  min-width: 56px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   background: var(--accent-control);
   border: none;
   border-radius: 999px;
-  min-height: 36px;
-  padding: 8px 14px 8px 12px;
+  height: 56px;
+  box-sizing: border-box;
+  padding: 0 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
   color: #fff;
   font-family: 'One UI Sans', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  max-width: 220px;
+  max-width: min(220px, 45%);
   overflow: hidden;
-  transition: opacity 0.15s ease;
+  transition: max-width 0.25s ease, padding 0.25s ease, gap 0.25s ease, opacity 0.15s ease;
   line-height: 1.3;
 }
 .post-search-jump:hover { opacity: 0.85; }
@@ -1252,15 +1260,32 @@ html[data-theme="dark"] .post-search-bar {
 
 .post-search-jump svg {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
 }
 
 .post-search-jump-text {
   min-width: 0;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: max-width 0.25s ease, opacity 0.15s ease;
+}
+
+.post-search-positioner:has(.post-search-field:focus-within) .post-search-jump {
+  max-width: 56px;
+  padding-inline: 18px;
+  gap: 0;
+}
+
+.post-search-positioner:has(.post-search-field:focus-within) .post-search-jump-text {
+  max-width: 0;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-search-anchor, .post-search-positioner, .post-search-jump, .post-search-jump-text { transition: none; }
 }
 
 
@@ -1339,8 +1364,8 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
   font-family: 'One UI Sans', var(--body), sans-serif;
   position: absolute;
   bottom: calc(100% + 12px);
-  left: 20px;
-  right: 20px;
+  left: 0;
+  right: 0;
   max-height: min(420px, 50dvh);
   overflow-y: auto;
   pointer-events: auto;
@@ -1359,13 +1384,14 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
 @media (max-width: 699px) { .post-search-results { left: 0; right: 0; } }
 
 @media (max-width: 699px) {
+  .post-search-positioner { gap: 8px; }
   .post-search-bar { gap: 6px; }
-  .post-search-jump { padding-inline: 10px; }
+  .post-search-jump { max-width: 56px; padding-inline: 18px; gap: 0; }
+  .post-search-jump-text { max-width: 0; opacity: 0; }
 }
 
 /* Preserve the query when a search is left open for reading. */
 .post-search-input:not(:focus) { text-overflow: ellipsis; }
-.post-search-results-trigger { flex-basis: auto; max-width: 45%; }
 
 /* Let mobile hero copy grow below the toolbar instead of underneath it. */
 @media (max-width: 699px) {

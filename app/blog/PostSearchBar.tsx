@@ -194,6 +194,10 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
   }, [searchQuery]);
 
   const handleJump = () => {
+    if (document.activeElement instanceof HTMLElement && document.activeElement.closest('.post-search-field')) {
+      document.activeElement.blur();
+    }
+    setShortcutOpen(false);
     if (headings.length === 0 || isBackToTop || !nextHeading) {
       window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       return;
@@ -214,129 +218,116 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     <>
       <div className="post-search-anchor" data-shortcut-open={shortcutOpen}>
         <div className="post-search-positioner">
-          {resultsVisible && <div className="post-search-results">
-            <div className="post-search-results-title" role="status">{results.length ? 'Relevant sections' : 'No matching sections. Try another word or topic.'}</div>
-            <div id="post-search-results" role="listbox" aria-label="Matching sections">
-              {results.map((result, index) => <button key={index} type="button" role="option"
-                id={`post-search-result-${index}`} aria-selected={index === activeResult}
-                onPointerDown={event => event.preventDefault()}
-                onClick={() => goToResult(index)} tabIndex={-1}>
-                <strong>{result.title}</strong><span>{result.excerpt}</span>
-              </button>)}
-            </div>
-          </div>}
-          <div
-            className="post-search-bar"
-            style={{
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-            }}
-          >
-            {/* Search icon */}
-            <svg
-              className="post-search-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M10.4131 3.4541C14.2501 3.4541 17.3711 6.57421 17.3711 10.4111C17.3711 12.0663 16.7893 13.5876 15.8213 14.7842L15.7275 14.9014L15.833 15.0068L20.375 19.5498C20.6025 19.7766 20.603 20.146 20.375 20.374V20.375C20.2618 20.4889 20.1126 20.5459 19.9629 20.5459C19.8134 20.5458 19.6649 20.4887 19.5518 20.375L15.0078 15.8311L14.9014 15.7256L14.7852 15.8193C13.5895 16.7874 12.0673 17.3701 10.4131 17.3701C6.57617 17.3701 3.45509 14.2481 3.45508 10.4111C3.45508 6.57421 6.5761 3.4541 10.4131 3.4541ZM10.4131 4.62012C7.21908 4.62012 4.62109 7.21705 4.62109 10.4111C4.62111 13.6051 7.21901 16.2041 10.4131 16.2041C13.6072 16.2041 16.2051 13.6051 16.2051 10.4111C16.2051 7.21705 13.6071 4.62012 10.4131 4.62012Z"
-                fill="currentColor"
-                stroke="currentColor"
-                strokeWidth="0.333333"
-              />
-            </svg>
-
-            {/* Input */}
-            <input
-              ref={inputRef}
-              type="text"
-              className="post-search-input"
-              placeholder="Search…"
-              aria-label="Search in post"
-              aria-keyshortcuts="Meta+k Control+k"
-              title="Search in post"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={resultsVisible && results.length > 0}
-              aria-controls={resultsVisible ? 'post-search-results' : undefined}
-              aria-activedescendant={resultsVisible && results.length ? `post-search-result-${activeResult}` : undefined}
-              onKeyDown={event => {
-                if (event.nativeEvent.isComposing) return;
-                if (resultsVisible && results.length && ['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
-                  event.preventDefault();
-                  if (event.key === 'Enter') goToResult(activeResult);
-                  else setActiveResult(index => (index + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length);
-                }
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  setShortcutOpen(false);
-                  inputRef.current?.blur();
-                }
+          <div className="post-search-field">
+            {resultsVisible && <div className="post-search-results">
+              <div className="post-search-results-title" role="status">{results.length ? 'Relevant sections' : 'No matching sections. Try another word or topic.'}</div>
+              <div id="post-search-results" role="listbox" aria-label="Matching sections">
+                {results.map((result, index) => <button key={index} type="button" role="option"
+                  id={`post-search-result-${index}`} aria-selected={index === activeResult}
+                  onPointerDown={event => event.preventDefault()}
+                  onClick={() => goToResult(index)} tabIndex={-1}>
+                  <strong>{result.title}</strong><span>{result.excerpt}</span>
+                </button>)}
+              </div>
+            </div>}
+            <div
+              className="post-search-bar"
+              style={{
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
               }}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => { setSearchFocused(false); setShortcutOpen(false); }}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value.slice(0, 200))}
-            />
-            <SearchShortcutChip focused={searchFocused} />
-
-            {/* Match count */}
-            {searchFocused && searchQuery && matchCount > 0 && (
-              <span className="post-search-match-badge" title="Exact phrase matches">{matchCount}</span>
-            )}
-
-            {/* Clear */}
-            {searchQuery && (
-              <button
-                className="post-search-clear"
-                onClick={() => {
-                  setSearchQuery('');
-                  inputRef.current?.focus();
-                }}
-                aria-label="Clear search"
+            >
+              {/* Search icon */}
+              <svg
+                className="post-search-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
+                <path
+                  d="M10.4131 3.4541C14.2501 3.4541 17.3711 6.57421 17.3711 10.4111C17.3711 12.0663 16.7893 13.5876 15.8213 14.7842L15.7275 14.9014L15.833 15.0068L20.375 19.5498C20.6025 19.7766 20.603 20.146 20.375 20.374V20.375C20.2618 20.4889 20.1126 20.5459 19.9629 20.5459C19.8134 20.5458 19.6649 20.4887 19.5518 20.375L15.0078 15.8311L14.9014 15.7256L14.7852 15.8193C13.5895 16.7874 12.0673 17.3701 10.4131 17.3701C6.57617 17.3701 3.45509 14.2481 3.45508 10.4111C3.45508 6.57421 6.5761 3.4541 10.4131 3.4541ZM10.4131 4.62012C7.21908 4.62012 4.62109 7.21705 4.62109 10.4111C4.62111 13.6051 7.21901 16.2041 10.4131 16.2041C13.6072 16.2041 16.2051 13.6051 16.2051 10.4111C16.2051 7.21705 13.6071 4.62012 10.4131 4.62012Z"
+                  fill="currentColor"
                   stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
+                  strokeWidth="0.333333"
+                />
+              </svg>
 
-            {/* Divider */}
-
-            <div className="post-search-divider" aria-hidden="true" />
-
-            {/* Jump / Back to top */}
-            {searchQuery.trim() ? (
-              <button
-                type="button"
-                className="post-search-jump post-search-results-trigger"
-                aria-label={resultsQuery !== searchQuery ? 'Search in progress' : `Show ${results.length} matching ${results.length === 1 ? 'section' : 'sections'}`}
-                aria-expanded={resultsVisible}
-                onClick={() => {
-                  setShortcutOpen(true);
-                  inputRef.current?.focus();
+              {/* Input */}
+              <input
+                ref={inputRef}
+                type="text"
+                className="post-search-input"
+                placeholder="Search…"
+                aria-label="Search in post"
+                aria-keyshortcuts="Meta+k Control+k"
+                title="Search in post"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={resultsVisible && results.length > 0}
+                aria-controls={resultsVisible ? 'post-search-results' : undefined}
+                aria-activedescendant={resultsVisible && results.length ? `post-search-result-${activeResult}` : undefined}
+                onKeyDown={event => {
+                  if (event.nativeEvent.isComposing) return;
+                  if (resultsVisible && results.length && ['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
+                    event.preventDefault();
+                    if (event.key === 'Enter') goToResult(activeResult);
+                    else setActiveResult(index => (index + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length);
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setShortcutOpen(false);
+                    inputRef.current?.blur();
+                  }
                 }}
-              >
-                <span className="post-search-jump-text">{resultsQuery !== searchQuery
-                  ? 'Searching…'
-                  : `${results.length} ${results.length === 1 ? 'section' : 'sections'} found`}</span>
-              </button>
-            ) : <ShortcutPopover title={jumpLabel} content={<>
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => { setSearchFocused(false); setShortcutOpen(false); }}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value.slice(0, 200))}
+              />
+              <SearchShortcutChip focused={searchFocused} />
+
+              {/* Match count */}
+              {searchFocused && searchQuery && matchCount > 0 && (
+                <span className="post-search-match-badge" title="Exact phrase matches">{matchCount}</span>
+              )}
+
+              {/* Clear */}
+              {searchQuery && (
+                <button
+                  className="post-search-clear"
+                  onClick={() => {
+                    setSearchQuery('');
+                    inputRef.current?.focus();
+                  }}
+                  aria-label="Clear search"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+
+            </div>
+          </div>
+          <ShortcutPopover title={jumpLabel} content={<>
               <span className="shortcut-popover-row"><span>Previous heading or top</span><kbd className="keyboard-shortcut-chip">[</kbd></span>
               <span className="shortcut-popover-row"><span>Next heading or bottom</span><kbd className="keyboard-shortcut-chip">]</kbd></span>
             </>}>
             {(descriptionId) => <button
               className="post-search-jump"
+              type="button"
+              onPointerDown={event => {
+                if (event.currentTarget.closest('.post-search-positioner')?.querySelector('.post-search-field:focus-within')) event.preventDefault();
+              }}
               onClick={handleJump}
               aria-label={jumpLabel}
               aria-describedby={descriptionId}
@@ -344,6 +335,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               {isBackToTopMode ? (
                 <svg
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -355,6 +347,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               ) : (
                 <svg
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -366,8 +359,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               )}
               <span className="post-search-jump-text">{jumpLabel}</span>
             </button>}
-            </ShortcutPopover>}
-          </div>
+            </ShortcutPopover>
         </div>
       </div>
     </>

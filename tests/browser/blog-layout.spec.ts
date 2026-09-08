@@ -49,6 +49,45 @@ for (const mode of ['post', 'index']) {
   });
 }
 
+for (const width of [320, 390, 1440]) {
+  test(`heading action has its own pill and collapses while searching at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await fixture(page);
+    await page.addStyleTag({ content: '.main-content { padding-bottom: 100vh !important; }' });
+    const bar = page.locator('.post-search-bar');
+    const jump = page.locator('.post-search-jump');
+    const input = page.getByRole('combobox', { name: 'Search in post' });
+    const label = jump.locator('.post-search-jump-text');
+    await expect(label).not.toHaveText('Back to top');
+    expect(await bar.locator('.post-search-jump').count()).toBe(0);
+    const before = await bar.boundingBox();
+    const action = await jump.boundingBox();
+    expect(action!.x - (before!.x + before!.width)).toBeGreaterThanOrEqual(7);
+    expect(action!.height).toBeCloseTo(before!.height, 0);
+    if (width < 700) {
+      expect(action!.width).toBeCloseTo(56, 0);
+      await expect(label).toHaveCSS('opacity', '0');
+    }
+    const destination = await jump.getAttribute('aria-label');
+    await input.focus();
+    await expect(jump).toHaveCSS('max-width', '56px');
+    await expect(label).toHaveCSS('opacity', '0');
+    await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
+    if (width > 320) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
+    else expect((await bar.boundingBox())!.width).toBeCloseTo(before!.width, 0);
+    await input.fill('searchable');
+    await expect(page.locator('.post-search-results')).toBeVisible();
+    await expect(jump).toHaveAttribute('aria-label', destination!);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    // Clicking the compact action must complete before blur expands its shape.
+    await jump.click();
+    await expect(input).not.toBeFocused();
+    await expect(label).toHaveCSS('opacity', width < 700 ? '0' : '1');
+    await expect(page.locator('.post-search-results')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  });
+}
+
 test('shortcut border follows the chip as heading labels and search focus change', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await fixture(page);
@@ -89,7 +128,7 @@ for (const width of [390, 1440]) {
     await page.evaluate(() => document.body.classList.remove('post-reading-compact'));
     const viewport = page.getByRole('region', { name: 'Image slideshow' });
     await expect(page.locator('.native-slideshow__dot')).toHaveCount(3);
-    await expect(page.locator('.native-slideshow__count')).toHaveText('1 / 3');
+    await expect(page.locator('.native-slideshow__indicators')).toHaveAttribute('aria-label', 'Image 1 of 3');
     await expect(page.locator('.native-slideshow__dot[data-active="true"]')).toHaveCount(1);
     await expect(viewport).not.toHaveAttribute('data-overflow-start');
     await expect(viewport).toHaveAttribute('data-overflow-end');
@@ -97,16 +136,18 @@ for (const width of [390, 1440]) {
     await viewport.focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
-    await expect(page.locator('.native-slideshow__count')).not.toHaveText('1 / 3');
+    await expect(page.locator('.native-slideshow__indicators')).not.toHaveAttribute('aria-label', 'Image 1 of 3');
     await expect(viewport).toHaveAttribute('data-overflow-start');
     await page.keyboard.press('ArrowLeft');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
-    await expect(page.locator('.native-slideshow__count')).toHaveText('1 / 3');
+    await expect(page.locator('.native-slideshow__indicators')).toHaveAttribute('aria-label', 'Image 1 of 3');
     await expect(viewport).not.toHaveAttribute('data-overflow-start');
     await viewport.evaluate(el => { el.scrollLeft = el.scrollWidth; });
     await expect(viewport).not.toHaveAttribute('data-overflow-end');
     await expect(page.locator('.native-slideshow__indicators')).toHaveAttribute('aria-label', 'Image 3 of 3');
-    await expect(page.locator('.native-slideshow__count')).toHaveText('3 / 3');
+    await expect(page.locator('.native-slideshow__count')).toHaveCount(0);
+    await expect(page.locator('.native-slideshow__indicators')).toHaveCSS('padding-left', '20px');
+    expect(await page.locator('.native-slideshow__dot[data-active="true"]').evaluate(el => getComputedStyle(el).backgroundColor === getComputedStyle(el.parentElement!.parentElement!).color)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

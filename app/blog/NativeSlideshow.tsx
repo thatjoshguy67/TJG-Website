@@ -163,7 +163,6 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
             data-active={index === activeSlide}
           />)}
         </div>
-        <span className="native-slideshow__count" aria-hidden="true">{Math.min(activeSlide + 1, slides.length)} / {slides.length}</span>
       </div>
     </div>
   );
