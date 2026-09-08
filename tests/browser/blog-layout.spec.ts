@@ -117,6 +117,13 @@ test('height-capped article images keep their visible corners inside the rounded
   });
   expect(size.ratio).toBeCloseTo(size.naturalRatio, 2);
   expect(size.height).toBeLessThanOrEqual(420);
+  expect(await picture.evaluate(el => Math.abs(el.getBoundingClientRect().left - el.closest('figure')!.getBoundingClientRect().left))).toBeLessThan(1);
   await expect(picture).toHaveCSS('border-top-left-radius', '28px');
   await expect(page.locator('.wp-block-video video')).toHaveCSS('border-top-left-radius', '28px');
+  for (const compact of [false, true]) {
+    await page.evaluate(compact => document.body.classList.toggle('post-reading-compact', compact), compact);
+    await expect(picture).toHaveCSS('border-top-left-radius', '28px');
+    await expect(page.locator('.native-slideshow__img').first()).toHaveCSS('border-top-left-radius', '28px');
+    await expect(page.locator('.native-slideshow__slide').first()).toHaveCSS('border-top-left-radius', '28px');
+  }
 });

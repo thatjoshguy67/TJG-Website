@@ -153,7 +153,7 @@
   object-fit: contain !important;
   border-radius: var(--br-9xl) !important;
   display: block !important;
-  margin: 12px auto !important;
+  margin: 12px auto 12px 0 !important;
   padding: 0 !important;
   cursor: pointer;
 }
@@ -189,10 +189,13 @@
 }
 
 .body-text .portable-image-frame {
+  max-width: min(100%, calc(70vh * var(--blog-media-ratio, 100))) !important;
   overflow: hidden;
-  border-radius: var(--br-sm);
+  border-radius: var(--br-9xl);
   background: color-mix(in srgb, var(--secondary) 12%, transparent);
 }
+
+.body-text .portable-image--intrinsic img { width: auto !important; }
 
 /* --- Jetpack Image Compare Slider --- */
 
@@ -200,7 +203,7 @@
   margin: 24px 0 !important;
 }
 .body-text .ko-compare__viewport {
-  --_radius: 28px;
+  --_radius: var(--br-9xl);
   position: relative !important;
   width: 100% !important;
   aspect-ratio: var(--ar, 16 / 9) !important;
@@ -408,7 +411,7 @@
   width: 100% !important;
   height: auto !important;
   display: block !important;
-  border-radius: var(--br-md) !important;
+  border-radius: var(--br-9xl) !important;
   margin: 0 !important;
 }
 .body-text .wp-block-gallery figcaption,
@@ -439,7 +442,7 @@
   width: 100% !important;
   height: auto !important;
   display: block !important;
-  border-radius: var(--br-md) !important;
+  border-radius: var(--br-9xl) !important;
   margin: 0 !important;
 }
 .body-text .gallery .gallery-caption {
@@ -484,7 +487,7 @@
 .lightbox-overlay.closing { display: flex !important; opacity: 0 !important; }
 .lightbox-content { position: relative !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
 .lightbox-stage { position: relative !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; }
-.lightbox-img { position: absolute !important; max-width: 100% !important; max-height: 100% !important; border-radius: var(--br-sm) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.4) !important; transform: scale(0.98) translateX(0) !important; opacity: 0 !important; transition: transform 250ms ease, opacity 250ms ease !important; z-index: 1 !important; }
+.lightbox-img { position: absolute !important; max-width: 100% !important; max-height: 100% !important; border-radius: var(--br-9xl) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.4) !important; transform: scale(0.98) translateX(0) !important; opacity: 0 !important; transition: transform 250ms ease, opacity 250ms ease !important; z-index: 1 !important; }
 .lightbox-img.incoming { opacity: 0 !important; transform: scale(1) translateX(var(--incomingStart, 0)) !important; }
 .lightbox-overlay.open .lightbox-img.current { transform: scale(1) translateX(0) !important; opacity: 1 !important; }
 .lightbox-overlay.open.slide-next.sliding-active .lightbox-img.current { transform: scale(0.98) translateX(-8%) !important; opacity: 0 !important; }
@@ -538,7 +541,7 @@
   width: 100% !important;
   height: auto !important;
   display: block !important;
-  border-radius: var(--br-lg) !important;
+  border-radius: var(--br-9xl) !important;
   margin: 0 !important;
 }
 .body-text .wp-block-media-text__content > *:first-child { margin-top: 0 !important; }
@@ -1431,7 +1434,7 @@ body.post-reading-compact .body-text img:not(.ko-compare__img):not(.native-slide
   max-width: 85% !important;
   max-height: min(280px, 40vh) !important;
   margin: 8px auto 8px 0 !important;
-  border-radius: var(--br-lg) !important;
+  border-radius: var(--br-9xl) !important;
 }
 body.post-reading-compact .body-text .portable-image-frame { width: fit-content; max-width: 85% !important; }
 body.post-reading-compact .body-text .portable-image-frame img { max-width: 100% !important; }

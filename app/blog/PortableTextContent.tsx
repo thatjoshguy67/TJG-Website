@@ -51,14 +51,14 @@ function PortableImage({ block }: { block: PortableTextBlock }) {
   const dimensions = image?.asset?._ref?.match(/-(\d+)x(\d+)-[^-]+$/);
   // Unknown legacy asset dimensions: avoid inventing an aspect ratio.
   // eslint-disable-next-line @next/next/no-img-element
-  if (!dimensions) return src ? <figure><img src={src} alt={block.alt || block.caption || ''} loading="lazy" decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
+  if (!dimensions) return src ? <figure className="portable-image portable-image--intrinsic"><img src={src} alt={block.alt || block.caption || ''} loading="lazy" decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
   const crop = image?.crop;
   const width = Math.max(1, Math.round(Number(dimensions[1]) * (1 - (crop?.left || 0) - (crop?.right || 0))));
   const height = Math.max(1, Math.round(Number(dimensions[2]) * (1 - (crop?.top || 0) - (crop?.bottom || 0))));
   if (!src) return null;
 
   return (
-    <figure className="portable-image">
+    <figure className="portable-image" style={{ '--blog-media-ratio': width / height } as React.CSSProperties}>
       <div className="portable-image-frame">
         <Image
           src={src}

@@ -64,7 +64,7 @@
   height: var(--native-slideshow-height);
   margin: 0;
   overflow: hidden;
-  border-radius: var(--br-lg);
+  border-radius: var(--br-9xl);
   background: var(--container-background);
   scroll-snap-align: start;
 }
@@ -78,7 +78,7 @@
   height: 100% !important;
   margin: 0 !important;
   object-fit: contain !important;
-  border-radius: var(--br-lg) !important;
+  border-radius: var(--br-9xl) !important;
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
