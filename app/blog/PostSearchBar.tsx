@@ -361,6 +361,12 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
 
             </div>
           </div>
+          <button
+            type="button"
+            className="post-search-open"
+            aria-label="Open post search"
+            onClick={() => inputRef.current?.focus()}
+          />
           <ShortcutPopover title={jumpLabel} content={<>
               <span className="shortcut-popover-row"><span>Previous heading or top</span><kbd className="keyboard-shortcut-chip">[</kbd></span>
               <span className="shortcut-popover-row"><span>Next heading or bottom</span><kbd className="keyboard-shortcut-chip">]</kbd></span>

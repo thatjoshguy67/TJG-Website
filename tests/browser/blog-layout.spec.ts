@@ -76,10 +76,9 @@ for (const width of [320, 390, 1440]) {
     await expect(jump).toHaveCSS('width', '56px');
     await expect(label).toHaveCSS('opacity', '0');
     await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
-    if (width > 320) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
-    else expect((await bar.boundingBox())!.width).toBeCloseTo(before!.width, 0);
+    await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
     const toolbarAfter = await toolbar.boundingBox();
-    if (width > 320) expect(toolbarAfter!.width).toBeGreaterThan(toolbarBefore!.width);
+    if (width >= 700) expect(toolbarAfter!.width).toBeGreaterThan(toolbarBefore!.width);
     else expect(toolbarAfter!.width).toBeCloseTo(toolbarBefore!.width, 0);
     expect(toolbarAfter!.x + toolbarAfter!.width / 2).toBeCloseTo(toolbarBefore!.x + toolbarBefore!.width / 2, 0);
     await input.fill('searchable');
@@ -92,6 +91,40 @@ for (const width of [320, 390, 1440]) {
     await expect(label).toHaveCSS('opacity', width < 700 ? '0' : '1');
     await expect(page.locator('.post-search-results')).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  });
+}
+
+for (const width of [320, 390, 600]) {
+  test(`mobile search opens from a left icon and collapses back at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await fixture(page);
+    const open = page.getByRole('button', { name: 'Open post search' });
+    const input = page.getByRole('combobox', { name: 'Search in post' });
+    const bar = page.locator('.post-search-bar');
+    const jump = page.locator('.post-search-jump');
+    await expect(bar).toHaveCSS('width', '56px');
+    expect((await bar.boundingBox())!.x).toBeCloseTo(16, 0);
+    const action = (await jump.boundingBox())!;
+    expect(action.x + action.width).toBeCloseTo(width - 16, 0);
+    await expect(input).toHaveCSS('opacity', '0');
+    // Keyboard focus on the trigger must not hide it before it is activated.
+    await open.focus();
+    await expect(open).toBeVisible();
+    await expect(bar).toHaveCSS('width', '56px');
+    await page.keyboard.press('Enter');
+    await expect(input).toBeFocused();
+    await expect(bar).toHaveCSS('width', `${width - 32 - 8 - 56}px`);
+    await input.fill('searchable');
+    await expect(page.locator('.post-search-results')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(bar).toHaveCSS('width', '56px');
+    await expect(open).toBeVisible();
+    expect((await bar.boundingBox())!.x).toBeCloseTo(16, 0);
+    await open.click();
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue('searchable');
+    await expect(bar).toHaveCSS('width', `${width - 32 - 8 - 56}px`);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
 

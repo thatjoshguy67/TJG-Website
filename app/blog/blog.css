@@ -1102,6 +1102,8 @@ mark.post-search-hl {
   max-width: 860px;
 }
 
+.post-search-open { display: none; }
+
 .post-search-field {
   position: relative;
   flex: 1;
@@ -1122,13 +1124,10 @@ mark.post-search-hl {
     left: 0;
     right: 0;
     width: calc(100% - 32px);
-    max-width: 348px;
+    max-width: none;
     padding: 0;
     margin: 0 auto;
     transition: max-width 0.36s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .post-search-anchor:has(.post-search-field:focus-within) {
-    max-width: 510px;
   }
   .post-search-positioner {
     max-width: none;
@@ -1416,7 +1415,40 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
 
 @media (max-width: 699px) {
   .post-search-positioner { gap: 8px; }
-  .post-search-bar { gap: 6px; }
+  .post-search-bar {
+    gap: 6px;
+    overflow: hidden;
+    transition: width 0.36s cubic-bezier(0.22, 1, 0.36, 1), padding 0.36s cubic-bezier(0.22, 1, 0.36, 1), gap 0.36s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .post-search-bar > :not(.post-search-icon) { transition: opacity 0.18s ease; }
+  .post-search-field:not(:focus-within) .post-search-bar {
+    width: 56px;
+    padding-inline: 17px;
+    gap: 0;
+  }
+  .post-search-field:not(:focus-within) .post-search-bar > :not(.post-search-icon) {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .post-search-open {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .post-search-open:focus-visible { outline: 2px solid var(--accent-control); outline-offset: 3px; }
+  .post-search-positioner:has(.post-search-field:focus-within) .post-search-open {
+    visibility: hidden;
+    pointer-events: none;
+  }
   .post-search-jump { width: 56px; padding-inline: 18px; gap: 0; }
   .post-search-jump-text { opacity: 0; }
 }
@@ -1505,3 +1537,7 @@ body.post-reading-compact .body-text :is(td, th) { padding-block: 6px !important
 body.post-reading-compact .body-text .content-heading-h1 { font-size: 25px !important; }
 body.post-reading-compact .body-text .content-heading-h2 { font-size: 22px !important; }
 body.post-reading-compact .body-text .content-heading-h3 { font-size: 20px !important; }
+
+@media (max-width: 699px) and (prefers-reduced-motion: reduce) {
+  .post-search-bar, .post-search-bar > :not(.post-search-icon) { transition: none; }
+}
