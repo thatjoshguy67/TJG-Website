@@ -76,11 +76,12 @@ for (const width of [320, 390, 1440]) {
     await expect(jump).toHaveCSS('width', '56px');
     await expect(label).toHaveCSS('opacity', '0');
     await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
-    if (width >= 700) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
+    if (width > 320) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
     else expect((await bar.boundingBox())!.width).toBeCloseTo(before!.width, 0);
     const toolbarAfter = await toolbar.boundingBox();
-    expect(toolbarAfter!.width).toBeCloseTo(toolbarBefore!.width, 0);
-    expect(toolbarAfter!.x).toBeCloseTo(toolbarBefore!.x, 0);
+    if (width > 320) expect(toolbarAfter!.width).toBeGreaterThan(toolbarBefore!.width);
+    else expect(toolbarAfter!.width).toBeCloseTo(toolbarBefore!.width, 0);
+    expect(toolbarAfter!.x + toolbarAfter!.width / 2).toBeCloseTo(toolbarBefore!.x + toolbarBefore!.width / 2, 0);
     await input.fill('searchable');
     await expect(page.locator('.post-search-results')).toBeVisible();
     await expect(jump).toHaveAttribute('aria-label', destination!);
@@ -144,12 +145,13 @@ test('toolbar animates its internal widths on focus, blur, and heading changes',
     getComputedStyle(button).width;
     const animation = button.getAnimations().find(a => (a as CSSTransition).transitionProperty === 'width');
     if (!animation) return [];
-    animation.pause();
+    const animations = toolbar.getAnimations({ subtree: true });
+    animations.forEach(animation => animation.pause());
     const samples = [0, 120, 360].map(time => {
-      animation.currentTime = time;
+      animations.forEach(animation => { animation.currentTime = time; });
       return { button: parseFloat(getComputedStyle(button).width), search: search.getBoundingClientRect().width, total: toolbar.getBoundingClientRect().width };
     });
-    animation.finish();
+    animations.forEach(animation => animation.finish());
     return samples;
   });
   for (const focus of [true, false]) {
@@ -158,9 +160,11 @@ test('toolbar animates its internal widths on focus, blur, and heading changes',
     expect(samples).toHaveLength(3);
     expect(samples[1].button).toBeGreaterThan(Math.min(samples[0].button, samples[2].button));
     expect(samples[1].button).toBeLessThan(Math.max(samples[0].button, samples[2].button));
+    expect(samples[2].total).toBeCloseTo(focus ? 860 : 640, 0);
+    expect(samples[1].total).toBeGreaterThan(640);
+    expect(samples[1].total).toBeLessThan(860);
     for (const sample of samples) {
-      expect(sample.total).toBeCloseTo(samples[0].total, 0);
-      expect(sample.search + sample.button).toBeCloseTo(samples[0].search + samples[0].button, 0);
+      expect(sample.search + sample.button + 12 + 40).toBeCloseTo(sample.total, 0);
     }
   }
   const label = await jump.getAttribute('aria-label');
@@ -192,7 +196,7 @@ test('heading labels use available search space without truncation after resizin
     await page.locator('#fit-heading').evaluate((el, text) => { el.textContent = text; }, text);
     await expect(jump).toHaveAttribute('aria-label', text);
     await expectFits();
-    expect((await toolbar.boundingBox())!.width).toBeCloseTo(originalWidth, 0);
+    await expect.poll(async () => (await toolbar.boundingBox())!.width).toBeCloseTo(originalWidth, 0);
     expect((await page.locator('.post-search-bar').boundingBox())!.width).toBeGreaterThanOrEqual(200);
     await page.locator('.post-search-input').focus();
     await expect(jump).toHaveCSS('width', '56px');

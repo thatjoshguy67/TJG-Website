@@ -1095,6 +1095,11 @@ mark.post-search-hl {
   max-width: 640px;
   padding: 0 20px;
   box-sizing: border-box;
+  transition: max-width 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.post-search-positioner:has(.post-search-field:focus-within) {
+  max-width: 860px;
 }
 
 .post-search-field {
@@ -1120,6 +1125,10 @@ mark.post-search-hl {
     max-width: 348px;
     padding: 0;
     margin: 0 auto;
+    transition: max-width 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .post-search-anchor:has(.post-search-field:focus-within) {
+    max-width: 510px;
   }
   .post-search-positioner {
     max-width: none;
