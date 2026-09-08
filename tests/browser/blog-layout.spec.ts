@@ -88,18 +88,25 @@ for (const width of [390, 1440]) {
     }
     await page.evaluate(() => document.body.classList.remove('post-reading-compact'));
     const viewport = page.getByRole('region', { name: 'Image slideshow' });
+    await expect(page.locator('.native-slideshow__dot')).toHaveCount(3);
+    await expect(page.locator('.native-slideshow__count')).toHaveText('1 / 3');
+    await expect(page.locator('.native-slideshow__dot[data-active="true"]')).toHaveCount(1);
     await expect(viewport).not.toHaveAttribute('data-overflow-start');
     await expect(viewport).toHaveAttribute('data-overflow-end');
     await expect(viewport).not.toHaveCSS('mask-image', 'none');
     await viewport.focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+    await expect(page.locator('.native-slideshow__count')).not.toHaveText('1 / 3');
     await expect(viewport).toHaveAttribute('data-overflow-start');
     await page.keyboard.press('ArrowLeft');
     await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+    await expect(page.locator('.native-slideshow__count')).toHaveText('1 / 3');
     await expect(viewport).not.toHaveAttribute('data-overflow-start');
     await viewport.evaluate(el => { el.scrollLeft = el.scrollWidth; });
     await expect(viewport).not.toHaveAttribute('data-overflow-end');
+    await expect(page.locator('.native-slideshow__indicators')).toHaveAttribute('aria-label', 'Image 3 of 3');
+    await expect(page.locator('.native-slideshow__count')).toHaveText('3 / 3');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
