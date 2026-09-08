@@ -144,7 +144,7 @@
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
 }
-.body-text img:not(.ko-compare__img) {
+.body-text img:not(.ko-compare__img):not(.native-slideshow__img) {
   max-width: 100% !important;
   width: 100% !important;
   height: auto !important;
@@ -156,8 +156,8 @@
   padding: 0 !important;
   cursor: pointer;
 }
-.body-text figure:has(> img),
-.body-text figure:has(> a > img) {
+.body-text figure:not(.native-slideshow__slide):has(> img),
+.body-text figure:not(.native-slideshow__slide):has(> a > img) {
   width: 100% !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -1097,15 +1097,7 @@ mark.post-search-hl {
 
 @media (min-width: 700px) {
   .post-search-anchor {
-    left: min(34%, 396px);
-    padding: 0 20px;
-  }
-
-  body.sidebar-custom-width:not(.nav-collapsed) .post-search-anchor {
-    left: var(--sidebar-content-offset);
-  }
-
-  body.nav-collapsed .post-search-anchor {
+    /* Keep the toolbar over the reading area when the drawer opens. */
     left: max(8%, 88px);
     padding: 0 10px;
   }
@@ -1276,7 +1268,7 @@ body.post-reading-compact .body-text li { font-size: 16px !important; line-heigh
 body.post-reading-compact .body-text { font-size: 16px; line-height: 1.5; }
 body.post-reading-compact .body-text p { font-size: 16px !important; line-height: 1.5 !important; margin-top: 8px !important; margin-bottom: 8px !important; }
 body.post-reading-compact .body-text figure { margin-top: 12px; margin-bottom: 12px; }
-body.post-reading-compact .body-text img:not(.ko-compare__img) { max-height: 360px !important; width: auto !important; max-width: 100%; object-fit: contain; margin-inline: 0 auto !important; }
+body.post-reading-compact .body-text img:not(.ko-compare__img):not(.native-slideshow__img) { max-height: 360px !important; width: auto !important; max-width: 100%; object-fit: contain; margin-inline: 0 auto !important; }
 body.post-reading-compact .post-hero-card { height: clamp(180px, 26vh, 280px); }
 body.post-reading-focus .post-search-anchor { display: none; }
 body.post-reading-focus .desktop-nav,

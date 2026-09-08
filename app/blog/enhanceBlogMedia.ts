@@ -19,6 +19,10 @@ function headingId(heading: HTMLElement, index: number): string {
 }
 
 function containOffscreenMedia(element: HTMLElement) {
+  // Slides need their image's intrinsic width to size the horizontal track.
+  // Size containment substitutes a placeholder and creates blank slide space.
+  if (element.closest('.native-slideshow')) return;
+
   const container = element.closest<HTMLElement>(
     'figure, .wp-block-embed, .wp-block-video, .wp-block-gallery'
   );

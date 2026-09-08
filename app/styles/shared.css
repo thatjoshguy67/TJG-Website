@@ -2711,6 +2711,12 @@ justify-content: flex-start;
   }
 }
 
+.search-shortcut-anchor {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
 .keyboard-shortcut-chip {
   display: inline-flex;
   align-items: center;

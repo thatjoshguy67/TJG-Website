@@ -25,16 +25,8 @@
 }
 
 @media (min-width: 700px) {
-  .floating-search-anchor {
-    left: min(34%, 396px);
-    padding: 0 20px;
-  }
-
-  body.sidebar-custom-width:not(.nav-collapsed) .floating-search-anchor:not(.floating-search-anchor--inline) {
-    left: var(--sidebar-content-offset);
-  }
-
-  body.nav-collapsed .floating-search-anchor:not(.floating-search-anchor--inline) {
+  .floating-search-anchor:not(.floating-search-anchor--inline) {
+    /* Match the post toolbar's stable position beside the navigation rail. */
     left: max(8%, 88px);
     padding: 0 10px;
   }

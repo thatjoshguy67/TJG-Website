@@ -1,0 +1,98 @@
+import { test, expect, type Page } from '@playwright/test';
+import { build } from 'esbuild';
+import fs from 'node:fs';
+import path from 'node:path';
+
+let script: string;
+let styles: string;
+test.beforeAll(async () => {
+  const bundle = await build({
+    entryPoints: ['tests/browser/fixtures/blog-layout.tsx'], bundle: true, write: false,
+    outdir: 'browser-fixture', jsx: 'automatic', platform: 'browser',
+    define: { 'process.env.NODE_ENV': '"production"' },
+    alias: Object.fromEntries(['navigation', 'image', 'dynamic', 'link'].map(name =>
+      [`next/${name}`, path.resolve(`tests/browser/fixtures/${name}.${name === 'navigation' ? 'ts' : 'tsx'}`)])),
+  });
+  script = bundle.outputFiles.find(file => file.path.endsWith('.js'))!.text;
+  styles = bundle.outputFiles.find(file => file.path.endsWith('.css'))?.text ?? '';
+});
+
+async function fixture(page: Page, mode = 'post') {
+  await page.route('**/__blog_layout?*', route => route.fulfill({ contentType: 'text/html', body:
+    '<!doctype html><html data-theme="light"><body class="nav-collapsed"><div id="fixture"></div></body></html>' }));
+  await page.goto(`/__blog_layout?${mode}`);
+  for (const file of ['app/styles/shared.css', 'app/globals.css', 'app/blog/blog.css']) {
+    await page.addStyleTag({ content: fs.readFileSync(file, 'utf8').replace(/@import[^;]+;/g, '') });
+  }
+  await page.addStyleTag({ content: styles });
+  await page.addScriptTag({ content: script });
+  await expect(page.locator('.native-slideshow__img')).toHaveCount(3);
+  await expect.poll(() => page.locator('.native-slideshow__img').evaluateAll(images =>
+    images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+}
+
+for (const mode of ['post', 'index']) {
+  test(`${mode} search stays in place when navigation opens or changes width`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await fixture(page, mode);
+    const bar = page.locator(mode === 'post' ? '.post-search-bar' : '.floating-search-bar');
+    const initial = await bar.boundingBox();
+    for (const state of ['', 'sidebar-custom-width', 'nav-collapsed']) {
+      await page.evaluate(state => {
+        document.body.className = state;
+        document.body.style.setProperty('--sidebar-content-offset', '480px');
+      }, state);
+      const current = await bar.boundingBox();
+      expect(current!.x).toBeCloseTo(initial!.x, 0);
+      expect(current!.width).toBeCloseTo(initial!.width, 0);
+    }
+  });
+}
+
+test('shortcut border follows the chip as heading labels and search focus change', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  const chip = page.locator('.post-search-bar kbd');
+  await expect(chip).toHaveAttribute('data-state', 'ready');
+  for (const label of ['Short', 'A much longer heading changes the button width', 'Next']) {
+    await page.locator('.post-search-jump-text').evaluate((el, label) => { el.textContent = label; }, label);
+    await expect.poll(() => chip.evaluate(el => {
+      const border = el.parentElement!.querySelector('svg[style*="absolute"]')!;
+      return Math.abs(el.getBoundingClientRect().x - border.getBoundingClientRect().x);
+    })).toBeLessThan(1);
+  }
+  await page.keyboard.press('Meta+k');
+  await expect(chip).toHaveText('Esc');
+  await expect(page.getByRole('combobox')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(chip).not.toHaveText('Esc');
+});
+
+for (const width of [390, 1440]) {
+  test(`slideshow has no blank slide space and scrolls at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await fixture(page);
+    for (const compact of [false, true]) {
+      await page.evaluate(compact => document.body.classList.toggle('post-reading-compact', compact), compact);
+      const sizes = await page.locator('.native-slideshow__slide').evaluateAll(slides => slides.map(slide => ({
+        slide: slide.getBoundingClientRect().width,
+        image: slide.querySelector('img')!.getBoundingClientRect().width,
+        contained: getComputedStyle(slide).contentVisibility,
+        gap: slide.nextElementSibling ? slide.nextElementSibling.getBoundingClientRect().left - slide.getBoundingClientRect().right : 12,
+      })));
+      for (const size of sizes) {
+        expect(size.slide).toBeCloseTo(size.image, 0);
+        expect(size.gap).toBeCloseTo(12, 0);
+        expect(size.contained).toBe('visible');
+      }
+    }
+    await page.evaluate(() => document.body.classList.remove('post-reading-compact'));
+    const viewport = page.getByRole('region', { name: 'Image slideshow' });
+    await viewport.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(() => viewport.evaluate(el => el.scrollLeft)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
