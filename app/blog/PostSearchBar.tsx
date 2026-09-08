@@ -97,6 +97,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     scrollToHeading(result.target);
   }
   const inputRef = useRef<HTMLInputElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileOpening, setMobileOpening] = useState(false);
@@ -168,7 +169,9 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
       // Recheck after cancellation: rotating/resizing can replace a transition.
       while (!cancelled) {
         void bar.offsetWidth;
-        const animations = bar.getAnimations().filter(animation => animation.playState !== 'finished');
+        const animations = bar.getAnimations().filter(animation =>
+          animation.playState !== 'finished' && animation instanceof CSSTransition &&
+          ['width', 'padding-left', 'padding-right', 'column-gap'].includes(animation.transitionProperty));
         if (!animations.length) break;
         await Promise.allSettled(animations.map(animation => animation.finished));
       }
@@ -289,6 +292,31 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
 
   const visible = enabledByDefault || hasSavedPreferences || shortcutOpen;
   useLayoutEffect(() => {
+    const anchor = anchorRef.current;
+    const viewport = window.visualViewport;
+    if (!anchor || !viewport) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      // Mobile keyboards can resize/pan only the visual viewport, leaving fixed
+      // elements anchored behind them. Layout-resizing browsers need no lift.
+      const bottom = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      anchor.style.setProperty('--post-search-viewport-bottom', `${bottom}px`);
+      anchor.style.setProperty('--post-search-visible-height', `${viewport.height}px`);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    viewport.addEventListener('resize', schedule);
+    viewport.addEventListener('scroll', schedule);
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', schedule);
+      viewport.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [visible]);
+  useLayoutEffect(() => {
     const positioner = positionerRef.current;
     const label = jumpLabelRef.current;
     if (!positioner || !label) return;
@@ -308,7 +336,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
 
   return (
     <>
-      <div className="post-search-anchor" data-shortcut-open={shortcutOpen}>
+      <div ref={anchorRef} className="post-search-anchor" data-shortcut-open={shortcutOpen}>
         <div ref={positionerRef} className="post-search-positioner">
           <div className="post-search-field" data-mobile-open={mobileOpen} data-mobile-opening={mobileOpening}>
             {resultsVisible && <div className="post-search-results">
@@ -325,6 +353,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
             <div
               ref={searchBarRef}
               className="post-search-bar"
+              style={{ backdropFilter: 'var(--post-search-backdrop, blur(24px))', WebkitBackdropFilter: 'var(--post-search-backdrop, blur(24px))' }}
             >
               {/* Search icon */}
               <svg

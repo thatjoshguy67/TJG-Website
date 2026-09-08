@@ -146,7 +146,9 @@ test('mobile input waits for expansion and cancels pending focus when dismissed'
   });
   await expect(input).not.toBeFocused();
   await bar.evaluate(el => {
-    (el as HTMLElement & { widthAnimation: Animation }).widthAnimation.currentTime = 230;
+    const animation = (el as HTMLElement & { widthAnimation: Animation }).widthAnimation;
+    if (animation.effect!.getTiming().duration !== 250) throw new Error('Expansion must take 250ms');
+    animation.currentTime = 125;
   });
   const midway = (await bar.boundingBox())!.width;
   expect(midway).toBeGreaterThan(56);
@@ -172,6 +174,76 @@ test('mobile input waits for expansion and cancels pending focus when dismissed'
   await open.click();
   await expect(input).toBeFocused();
   await expect(bar).toHaveCSS('width', '294px');
+});
+
+test('mobile toolbar follows keyboard resize, viewport pan, and dismissal', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value:
+      Object.assign(new EventTarget(), { height: innerHeight, width: innerWidth, offsetTop: 0, offsetLeft: 0, scale: 1 }) });
+  });
+  await fixture(page);
+  const bar = page.locator('.post-search-bar');
+  const input = page.getByRole('combobox', { name: 'Search in post' });
+  await page.getByRole('button', { name: 'Open post search' }).click();
+  await expect(input).toBeFocused();
+  for (const [height, offsetTop] of [[560, 0], [480, 40], [520, 20]]) {
+    await page.evaluate(({ height, offsetTop }) => {
+      Object.assign(window.visualViewport!, { height, offsetTop });
+      window.visualViewport!.dispatchEvent(new Event('resize'));
+      window.visualViewport!.dispatchEvent(new Event('scroll'));
+    }, { height, offsetTop });
+    await expect.poll(async () => {
+      const rect = (await bar.boundingBox())!;
+      return Math.round(rect.y + rect.height);
+    }).toBe(height + offsetTop - 24);
+    await expect(input).toBeFocused();
+  }
+  await input.fill('searchable');
+  const results = page.locator('.post-search-results');
+  await expect(results).toBeVisible();
+  const panel = (await results.boundingBox())!;
+  expect(panel.y).toBeGreaterThanOrEqual(20);
+  expect(panel.y + panel.height).toBeLessThan((await bar.boundingBox())!.y);
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => {
+    Object.assign(window.visualViewport!, { height: innerHeight, offsetTop: 0 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  await expect(bar).toHaveCSS('width', '56px');
+  await expect.poll(async () => {
+    const rect = (await bar.boundingBox())!;
+    return Math.round(rect.y + rect.height);
+  }).toBe(876);
+  // A browser that resizes both viewports must not lift the toolbar twice.
+  await page.setViewportSize({ width: 390, height: 560 });
+  await page.evaluate(() => {
+    Object.assign(window.visualViewport!, { height: innerHeight, offsetTop: 0 });
+    window.visualViewport!.dispatchEvent(new Event('resize'));
+  });
+  await expect.poll(async () => {
+    const rect = (await bar.boundingBox())!;
+    return Math.round(rect.y + rect.height);
+  }).toBe(536);
+});
+
+test('search keeps its glass blur across desktop and mobile states', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  const bar = page.locator('.post-search-bar');
+  const input = page.getByRole('combobox', { name: 'Search in post' });
+  for (const theme of ['light', 'dark']) {
+    await page.locator('html').evaluate((el, theme) => { el.dataset.theme = theme; }, theme);
+    await expect(bar).toHaveCSS('backdrop-filter', 'blur(24px)');
+    await input.focus();
+    await expect(bar).toHaveCSS('backdrop-filter', 'blur(24px)');
+    await input.blur();
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(bar).toHaveCSS('backdrop-filter', 'blur(32px) saturate(1.25)');
+  await page.getByRole('button', { name: 'Open post search' }).click();
+  await expect(input).toBeFocused();
+  await expect(bar).toHaveCSS('backdrop-filter', 'blur(24px)');
 });
 
 test('late article sections update the jump label and button and keyboard visit the same H1 sections', async ({ page }) => {

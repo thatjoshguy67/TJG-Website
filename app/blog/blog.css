@@ -1120,7 +1120,7 @@ mark.post-search-hl {
 
 @media (max-width: 699px) {
   .post-search-anchor {
-    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px) + var(--post-search-viewport-bottom, 0px));
     left: 0;
     right: 0;
     width: calc(100% - 32px);
@@ -1411,23 +1411,30 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
 .post-search-results button:is(:hover, [aria-selected="true"]) { background: color-mix(in srgb, var(--primary) 8%, transparent); }
 .post-search-results strong { display: block; font-size: 15px; margin-bottom: 4px; }
 .post-search-results button span { display: block; color: var(--secondary); font-size: 13px; line-height: 1.5; }
-@media (max-width: 699px) { .post-search-results { left: 0; right: 0; } }
+@media (max-width: 699px) {
+  .post-search-results {
+    left: 0;
+    right: 0;
+    max-height: min(420px, calc(var(--post-search-visible-height, 100dvh) * 0.5));
+  }
+}
 
 @media (max-width: 699px) {
   .post-search-positioner { gap: 8px; }
   .post-search-bar {
     gap: 6px;
     overflow: hidden;
-    transition: width 0.46s cubic-bezier(0.4, 0, 0.2, 1), padding 0.46s cubic-bezier(0.4, 0, 0.2, 1), gap 0.46s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, box-shadow 0.2s ease;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1), gap 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, box-shadow 0.2s ease;
   }
   .post-search-bar > :not(.post-search-icon) { transition: opacity 0.16s ease; }
-  .post-search-field[data-mobile-open="true"] .post-search-bar > :not(.post-search-icon) { transition: opacity 0.22s ease 0.1s; }
+  .post-search-field[data-mobile-open="true"] .post-search-bar > :not(.post-search-icon) { transition: opacity 0.16s ease 0.05s; }
   .post-search-field[data-mobile-opening="true"] .post-search-bar > :not(.post-search-icon) { pointer-events: none; }
   .post-search-field:not(:focus-within):not([data-mobile-open="true"]) .post-search-bar {
     width: 56px;
     padding-inline: 17px;
     gap: 0;
     background: color-mix(in srgb, var(--container-background) 45%, transparent);
+    --post-search-backdrop: blur(32px) saturate(1.25);
     -webkit-backdrop-filter: blur(32px) saturate(1.25);
     backdrop-filter: blur(32px) saturate(1.25);
   }
