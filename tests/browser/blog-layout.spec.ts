@@ -33,6 +33,7 @@ async function fixture(page: Page, mode = 'post') {
 
 for (const mode of ['post', 'index']) {
   test(`${mode} search stays in place when navigation opens or changes width`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 1440, height: 900 });
     await fixture(page, mode);
     const bar = page.locator(mode === 'post' ? '.post-search-bar' : '.floating-search-bar');
@@ -172,7 +173,7 @@ test('toolbar animates its internal widths on focus, blur, and heading changes',
   expect(await sampleTransition()).toHaveLength(0);
 });
 
-test('short heading labels fit without fractional-pixel truncation after resizing or font changes', async ({ page }) => {
+test('heading labels use available search space without truncation after resizing or font changes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await fixture(page);
   const jump = page.locator('.post-search-jump');
@@ -185,14 +186,25 @@ test('short heading labels fit without fractional-pixel truncation after resizin
     range.selectNodeContents(el);
     return range.getBoundingClientRect().width - el.getBoundingClientRect().width;
   })).toBeLessThanOrEqual(0);
-  for (const text of ['Overview', 'Research', 'Project Proposal', 'Next']) {
+  const toolbar = page.locator('.post-search-positioner');
+  const originalWidth = (await toolbar.boundingBox())!.width;
+  for (const text of ['Overview', 'Research', 'Project Proposal', 'Pre-Production & Planning', 'Final delivery & Evaluation', 'Next']) {
     await page.locator('#fit-heading').evaluate((el, text) => { el.textContent = text; }, text);
     await expect(jump).toHaveAttribute('aria-label', text);
     await expectFits();
+    expect((await toolbar.boundingBox())!.width).toBeCloseTo(originalWidth, 0);
+    expect((await page.locator('.post-search-bar').boundingBox())!.width).toBeGreaterThanOrEqual(200);
     await page.locator('.post-search-input').focus();
     await expect(jump).toHaveCSS('width', '56px');
     await page.locator('.post-search-input').blur();
     await expectFits();
+  }
+  await page.setViewportSize({ width: 700, height: 900 });
+  for (const text of ['Pre-Production & Planning', 'Final delivery & Evaluation']) {
+    await page.locator('#fit-heading').evaluate((el, text) => { el.textContent = text; }, text);
+    await expect(jump).toHaveAttribute('aria-label', text);
+    await expectFits();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   // A late font change must also resize the measurement while the label is clipped.
   await page.locator('.post-search-input').focus();

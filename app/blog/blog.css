@@ -1242,7 +1242,8 @@ html[data-theme="dark"] .post-search-bar {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  width: min(var(--post-search-jump-width, 220px), 220px, 45%);
+  /* Let the label use spare search space, while retaining a usable search field. */
+  width: min(var(--post-search-jump-width, 220px), calc(100% - 12px - 200px));
   overflow: hidden;
   transition: width 0.36s cubic-bezier(0.22, 1, 0.36, 1), padding 0.36s cubic-bezier(0.22, 1, 0.36, 1), gap 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease, box-shadow 0.2s ease;
   line-height: 1.3;
