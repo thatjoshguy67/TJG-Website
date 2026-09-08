@@ -7,7 +7,7 @@ import { rankPostSections, searchWords } from '../../lib/postSearch';
 import { isKeyboardInput } from '../../lib/keyboard';
 import { useReadingPreferences } from './useReadingPreferences';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 
 // Include the fading edge of the toolbar blur, not just the buttons.
 function headingJumpOffset() {
@@ -47,12 +47,54 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
   const [results, setResults] = useState<{ title: string; excerpt: string; target: HTMLElement }[]>([]);
   const [activeResult, setActiveResult] = useState(0);
   const [resultsQuery, setResultsQuery] = useState('');
+  const positionerRef = useRef<HTMLDivElement>(null);
+  const jumpLabelRef = useRef<HTMLSpanElement>(null);
+  const cancelJump = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancelJump.current?.(), []);
+
+  function scrollToHeading(target: HTMLElement | null, fallback = 0) {
+    cancelJump.current?.();
+    let timer = 0;
+    let frame = 0;
+    let corrections = 0;
+    const destination = () => Math.max(0, Math.min(
+      document.documentElement.scrollHeight - window.innerHeight,
+      target ? target.getBoundingClientRect().top + window.scrollY - headingJumpOffset() : fallback
+    ));
+    const stop = () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('scrollend', settle);
+      for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown']) window.removeEventListener(event, stop);
+      cancelJump.current = null;
+    };
+    const settle = () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // Offscreen media may replace estimated heights during the smooth scroll.
+        // Re-align the same heading, never a newly detected intermediate section.
+        const top = destination();
+        if ((!target || target.isConnected) && Math.abs(top - window.scrollY) > 1 && corrections++ < 4) {
+          window.scrollTo({ top, behavior: 'instant' });
+          settle();
+        } else stop();
+      });
+    };
+    const schedule = () => { clearTimeout(timer); timer = window.setTimeout(settle, 140); };
+    cancelJump.current = stop;
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('scrollend', settle);
+    for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown']) window.addEventListener(event, stop, { passive: true });
+    window.scrollTo({ top: destination(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    schedule();
+  }
   function goToResult(index: number) {
     const result = results[index];
     if (!result) return;
     inputRef.current?.blur();
-    window.scrollTo({ top: result.target.getBoundingClientRect().top + window.scrollY - headingJumpOffset(),
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    scrollToHeading(result.target);
   }
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -190,21 +232,34 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
     setShortcutOpen(false);
     // Resolve from the current DOM as well as keeping the visible label in sync.
     const target = nextPostHeading();
-    window.scrollTo({
-      top: target ? target.getBoundingClientRect().top + window.scrollY - headingJumpOffset() : 0,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-    });
+    scrollToHeading(target);
   };
 
   const jumpLabel = nextHeading?.text ?? 'Back to top';
   const isBackToTopMode = !nextHeading;
 
-  if (!enabledByDefault && !hasSavedPreferences && !shortcutOpen) return null;
+  const visible = enabledByDefault || hasSavedPreferences || shortcutOpen;
+  useLayoutEffect(() => {
+    const positioner = positionerRef.current;
+    const label = jumpLabelRef.current;
+    if (!positioner || !label) return;
+    // Animate a measured width: intrinsic/auto widths snap when the text changes.
+    // Measure the unclipped label even while the button is icon-only.
+    const measure = () => positioner.style.setProperty(
+      '--post-search-jump-width', `${label.scrollWidth + 68}px`
+    );
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(label);
+    return () => observer.disconnect();
+  }, [jumpLabel, visible]);
+
+  if (!visible) return null;
 
   return (
     <>
       <div className="post-search-anchor" data-shortcut-open={shortcutOpen}>
-        <div className="post-search-positioner">
+        <div ref={positionerRef} className="post-search-positioner">
           <div className="post-search-field">
             {resultsVisible && <div className="post-search-results">
               <div className="post-search-results-title" role="status">{results.length ? 'Relevant sections' : 'No matching sections. Try another word or topic.'}</div>
@@ -313,6 +368,9 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
               className="post-search-jump"
               type="button"
               onPointerDown={event => {
+                if (event.button !== 0) return;
+                // Keep the release/click on this button if its width changes mid-press.
+                event.currentTarget.setPointerCapture(event.pointerId);
                 if (event.currentTarget.closest('.post-search-positioner')?.querySelector('.post-search-field:focus-within')) event.preventDefault();
               }}
               onClick={handleJump}
@@ -344,7 +402,7 @@ export default function PostSearchBar({ enabledByDefault = true }: { enabledByDe
                   <path d="M12 5v14M5 12l7 7 7-7" />
                 </svg>
               )}
-              <span className="post-search-jump-text">{jumpLabel}</span>
+              <span className="post-search-jump-text"><span key={jumpLabel} ref={jumpLabelRef} className="post-search-jump-label">{jumpLabel}</span></span>
             </button>}
             </ShortcutPopover>
         </div>

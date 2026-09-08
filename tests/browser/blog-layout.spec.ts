@@ -72,7 +72,7 @@ for (const width of [320, 390, 1440]) {
     }
     const destination = await jump.getAttribute('aria-label');
     await input.focus();
-    await expect(jump).toHaveCSS('max-width', '56px');
+    await expect(jump).toHaveCSS('width', '56px');
     await expect(label).toHaveCSS('opacity', '0');
     await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
     if (width >= 700) await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
@@ -129,6 +129,80 @@ test('late article sections update the jump label and button and keyboard visit 
   await jump.click();
   await jump.click();
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+});
+
+test('toolbar animates its internal widths on focus, blur, and heading changes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  const jump = page.locator('.post-search-jump');
+  await expect(jump).not.toHaveAttribute('aria-label', 'Back to top');
+  await jump.evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished)); });
+  const sampleTransition = async () => page.locator('.post-search-positioner').evaluate(async toolbar => {
+    const button = toolbar.querySelector<HTMLElement>('.post-search-jump')!;
+    const search = toolbar.querySelector<HTMLElement>('.post-search-bar')!;
+    getComputedStyle(button).width;
+    const animation = button.getAnimations().find(a => (a as CSSTransition).transitionProperty === 'width');
+    if (!animation) return [];
+    animation.pause();
+    const samples = [0, 120, 360].map(time => {
+      animation.currentTime = time;
+      return { button: parseFloat(getComputedStyle(button).width), search: search.getBoundingClientRect().width, total: toolbar.getBoundingClientRect().width };
+    });
+    animation.finish();
+    return samples;
+  });
+  for (const focus of [true, false]) {
+    await page.locator('.post-search-input').evaluate((el, focus) => focus ? (el as HTMLElement).focus() : (el as HTMLElement).blur(), focus);
+    const samples = await sampleTransition();
+    expect(samples).toHaveLength(3);
+    expect(samples[1].button).toBeGreaterThan(Math.min(samples[0].button, samples[2].button));
+    expect(samples[1].button).toBeLessThan(Math.max(samples[0].button, samples[2].button));
+    for (const sample of samples) {
+      expect(sample.total).toBeCloseTo(samples[0].total, 0);
+      expect(sample.search + sample.button).toBeCloseTo(samples[0].search + samples[0].button, 0);
+    }
+  }
+  const label = await jump.getAttribute('aria-label');
+  await page.getByRole('heading', { name: label!, exact: true }).evaluate(el => { el.textContent = 'Next'; });
+  await expect(jump).toHaveAttribute('aria-label', 'Next');
+  expect(await sampleTransition()).toHaveLength(3);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('.post-search-input').focus();
+  await expect(jump).toHaveCSS('width', '56px');
+  expect(await sampleTransition()).toHaveLength(0);
+});
+
+test('one click lands on its intended heading when media changes height during scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await fixture(page);
+  await page.addStyleTag({ content: '.main-content { padding-bottom: 100vh !important; }' });
+  await page.locator('.body-text').first().evaluate(el => {
+    el.innerHTML = '<div id="resizing-media" style="height:2200px"></div><h2>Destination</h2><p>End.</p>';
+    window.addEventListener('scroll', () => {
+      document.getElementById('resizing-media')!.style.height = '3000px';
+    }, { once: true });
+  });
+  const jump = page.locator('.post-search-jump');
+  await expect(jump).toHaveAttribute('aria-label', 'Destination');
+  await jump.click();
+  await expect.poll(() => page.getByRole('heading', { name: 'Destination' }).evaluate(el => el.getBoundingClientRect().top)).toBeCloseTo(104, 0);
+  await expect(jump).toHaveAttribute('aria-label', 'Back to top');
+});
+
+test('a press still clicks when the heading button shrinks before release', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await fixture(page);
+  await page.addStyleTag({ content: '.main-content { padding-bottom: 100vh !important; }' });
+  const jump = page.locator('.post-search-jump');
+  await expect(jump).not.toHaveAttribute('aria-label', 'Back to top');
+  const before = (await jump.boundingBox())!;
+  await page.mouse.move(before.x + 20, before.y + before.height / 2);
+  await page.mouse.down();
+  await page.locator('.post-search-input').focus();
+  await expect(jump).toHaveCSS('width', '56px');
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
 });
 
 test('heading action hover scales with a shadow without fading', async ({ page }) => {

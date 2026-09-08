@@ -1241,9 +1241,9 @@ html[data-theme="dark"] .post-search-bar {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  max-width: min(220px, 45%);
+  width: min(var(--post-search-jump-width, 220px), 220px, 45%);
   overflow: hidden;
-  transition: max-width 0.25s ease, padding 0.25s ease, gap 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: width 0.36s cubic-bezier(0.22, 1, 0.36, 1), padding 0.36s cubic-bezier(0.22, 1, 0.36, 1), gap 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease, box-shadow 0.2s ease;
   line-height: 1.3;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1262,27 +1262,41 @@ html[data-theme="dark"] .post-search-bar {
 
 .post-search-jump-text {
   min-width: 0;
-  max-width: 180px;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.18s ease, transform 0.28s ease;
+}
+
+.post-search-jump-label {
+  display: block;
+  width: max-content;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: max-width 0.25s ease, opacity 0.15s ease;
+  animation: postJumpLabelIn 0.24s ease both;
+}
+
+@keyframes postJumpLabelIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .post-search-positioner:has(.post-search-field:focus-within) .post-search-jump {
-  max-width: 56px;
+  width: 56px;
   padding-inline: 18px;
   gap: 0;
 }
 
 .post-search-positioner:has(.post-search-field:focus-within) .post-search-jump-text {
-  max-width: 0;
   opacity: 0;
+  transform: translateX(4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .post-search-anchor, .post-search-positioner, .post-search-jump, .post-search-jump-text { transition: none; }
   .post-search-jump:is(:hover, :active) { transform: none; }
+  .post-search-jump-label { animation: none; }
 }
 
 
@@ -1383,8 +1397,8 @@ body:has(.floating-search-input:focus, .post-search-input:focus) .progressive-bl
 @media (max-width: 699px) {
   .post-search-positioner { gap: 8px; }
   .post-search-bar { gap: 6px; }
-  .post-search-jump { max-width: 56px; padding-inline: 18px; gap: 0; }
-  .post-search-jump-text { max-width: 0; opacity: 0; }
+  .post-search-jump { width: 56px; padding-inline: 18px; gap: 0; }
+  .post-search-jump-text { opacity: 0; }
 }
 
 /* Preserve the query when a search is left open for reading. */
