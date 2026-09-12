@@ -7,7 +7,7 @@
   --hero-content-center-y: 40%;
   --hero-reveal-center-x: 50%;
   --hero-reveal-center-y: 46%;
-  --hero-reveal-duration: 760ms;
+  --hero-reveal-duration: 950ms;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -74,10 +74,6 @@
     transform: scale(0.985);
   }
 
-  22% {
-    opacity: 0.72;
-  }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -91,8 +87,8 @@
   }
 
   to {
-    --hero-reveal-inner: 150%;
-    --hero-reveal-outer: 168%;
+    --hero-reveal-inner: 105%;
+    --hero-reveal-outer: 123%;
   }
 }
 
@@ -244,6 +240,19 @@ html[data-theme="dark"] .hero-theme-asset-dark {
   height: 100%;
 }
 
+@keyframes hero-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
 @keyframes hero-chip-in {
   from {
     opacity: 0;
@@ -284,25 +293,37 @@ html[data-theme="dark"] .hero-theme-asset-dark {
     );
   }
 
+  /* Start with the server-rendered page, without a hydration/image-decode gate.
+     The intro completes in 500ms while the decorative reveal continues. */
+  .home-page .hero-college-icon,
+  .home-page .hero-subtitle,
+  .home-page .hero-name,
+  .home-page .hero-description {
+    animation: hero-content-in 420ms cubic-bezier(0.2, 0.65, 0.3, 1) both;
+  }
+
+  .home-page .hero-name { animation-delay: 40ms; }
+  .home-page .hero-description { animation-delay: 80ms; }
+
   .home-page .hero-environment-chip,
   .home-page .hero-scroll-indicator {
     opacity: 0;
     translate: 0 20px;
   }
 
-  .home-page .hero-launch-ready .hero-mesh {
+  .home-page .hero-mesh {
     animation: hero-mesh-in var(--hero-reveal-duration) cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
 
-  .home-page .hero-launch-ready .hero-section::after {
+  .home-page .hero-section::after {
     animation: hero-reveal-in var(--hero-reveal-duration) cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
 
-  .home-page .hero-launch-ready .hero-environment-chip {
+  .home-page .hero-environment-chip {
     animation: hero-chip-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  .home-page .hero-launch-ready .hero-scroll-indicator {
+  .home-page .hero-scroll-indicator {
     animation: hero-scroll-in 380ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
   }
 }
@@ -325,8 +346,7 @@ html[data-theme="dark"] .hero-theme-asset-dark {
   white-space: nowrap;
 }
 
-/* Intro text is visible in the server HTML. Keep pointer-driven name effects,
-   but do not delay its first paint behind decorative entrance animations. */
+/* Reserve space while the lower homepage sections stream in. */
 .home-content-loading {
   min-height: 480px;
   padding: 40px 20px;

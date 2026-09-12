@@ -85,4 +85,12 @@ Implemented after approval on 12 September:
 
 Validation: production build, TypeScript, ESLint, 133 unit tests, 21 existing blog-layout browser checks, eight existing audit browser checks, and five new performance browser checks passed. The new checks cover light/dark intro visibility with application chunks blocked, streamed blog search, responsive article images and original lightbox media, and mobile section links. The real CMS search test uses the existing local `ff-blog-enabled` override because the developer machine's remote Flags stream intermittently times out.
 
+### Launch animation refinement
+
+After visual feedback on beta, restored a short staggered fade, 12 px rise, and 3 px blur for the intro. Each element animates for 420 ms, with the final line complete by 500 ms. These CSS animations begin with the server-rendered page, independent of application hydration and lower content feeds. The decorative gradient expands and fades over 950 ms, removing the previous early opacity jump. Its original SVG ellipse geometry is now inline, eliminating the separate image/decode readiness gate. Reduced-motion mode remains immediately visible; pointer-driven name effects remain available.
+
+Beta smoke testing also exposed a hydration mismatch when corner smoothing was enabled and the shared theme provider hydrated before streamed cards. Each card now uses a server/client hydration snapshot to preserve the initial server tree before adding its smoothing wrapper.
+
+Revalidated the production build, TypeScript, ESLint, and all eight performance browser checks. Added checks for intermediate text/gradient animation values, instant reduced-motion rendering, and delayed card hydration with corner smoothing enabled. Inspected 100/250/500/950 ms animation frames in both themes. This restores a bounded visual entrance instead of aiming for the diagnostic experiment's fully static intro; field improvements still require fresh Speed Insights events.
+
 The local build emitted the existing Google Sans Code fallback-font warning and an unavailable-shop-catalogue fallback message. These did not prevent the build. No region, full-page caching, production domain, or CMS content settings were changed.

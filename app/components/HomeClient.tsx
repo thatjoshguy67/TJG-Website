@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Location } from '@thatjoshguy/oneui-icons';
 import Footer from "./Footer";
 import { CarouselContentCard } from "./ContentCards";
-import { CSSProperties, ReactElement, ReactNode, RefObject, Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, ReactElement, ReactNode, RefObject, Suspense, lazy, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from './ThemeProvider';
 import type { FeaturedStory } from "../../lib/featured-stories";
 import type { Project } from "../../lib/projects";
@@ -114,6 +114,10 @@ function FoldIcon({ size = 24, color = "currentColor" }: { size?: number; color?
   );
 }
 
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 function SmoothHoverCard({
   children,
   corners = CARD_CORNERS,
@@ -122,8 +126,11 @@ function SmoothHoverCard({
   corners?: typeof CARD_CORNERS;
 }) {
   const { cornerSmoothing, cornerSmoothingAvailable, cornerSmoothingSupported, hydrated } = useTheme();
+  // The provider may already be hydrated when this streamed card first arrives.
+  // Its first client tree must still match the server's plain child element.
+  const cardHydrated = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
 
-  if (!hydrated || !cornerSmoothingAvailable || !cornerSmoothingSupported || !cornerSmoothing) {
+  if (!cardHydrated || !hydrated || !cornerSmoothingAvailable || !cornerSmoothingSupported || !cornerSmoothing) {
     return children;
   }
 
