@@ -25,35 +25,63 @@ the deployment model, rollout evidence and documentation checkpoints.
 
 ## Automated updates
 
-Three workflows keep the wiki in sync:
+Two Codex workflows keep the wiki in sync using OpenAI API billing:
 
 - `.github/workflows/docs-impact-review.yml` — **inline PR bot**: posts a
-  "Docs impact" comment on every PR into `main`/`beta`, listing which wiki
-  pages the change will make stale (or confirming there's no impact).
+  "Docs impact" comment on non-draft, same-repository PRs into `main`/`beta`,
+  listing which wiki pages the change will make stale (or confirming there's no
+  impact). Fork and Dependabot PRs are skipped because their runs do not receive
+  the API secret. The Codex action also limits execution to actors with repository
+  write access by default. A read-only job generates the text; a separate job
+  creates or updates the bot's existing comment.
 - `.github/workflows/update-docs.yml` — **after merge**: diffs the repo against
   the last documented commit recorded on the Environments page, updates the stale
-  wiki sections via the Notion MCP server, then bumps the recorded commit.
-- `.github/workflows/claude.yml` — **on demand**: mention `@claude` in any PR
-  or issue comment (e.g. "@claude update the Notion docs for this PR now");
-  the bot has Notion access and this page map.
+  wiki sections via the Notion MCP server, verifies the edits, then bumps the
+  recorded commit. Runs are serialized and read the latest target-branch commit.
+  For an on-demand update, open **Actions → Update Notion docs → Run workflow**
+  and select `main` or `beta`.
+
+The separate `.github/workflows/claude.yml` interactive `@claude` bot remains
+available and still uses `CLAUDE_CODE_OAUTH_TOKEN`. It is not involved in the two
+automatic Codex workflows.
 
 ### One-time setup
 
-1. **Claude auth**: run `claude setup-token` locally while logged in to Claude
-   Code with your Claude Pro/Max account, and add the resulting token as the
-   `CLAUDE_CODE_OAUTH_TOKEN` repository secret. CI runs are then covered by the
-   subscription (they share its rate limits). Alternative: use API billing by
-   adding an `ANTHROPIC_API_KEY` secret and switching the
-   `claude_code_oauth_token` input back to `anthropic_api_key` in the three
-   workflow files.
+1. **OpenAI auth**: create an API key in your
+   [OpenAI Platform project](https://platform.openai.com/api-keys) with access to
+   the Responses API and funded API billing. Add it as `OPENAI_API_KEY` under
+   [repository Settings → Secrets and variables → Actions](https://github.com/thatjoshguy67/TJG-Website/settings/secrets/actions).
+   Both automatic workflows use `openai/codex-action@v1`, which runs Codex through
+   its API proxy with `drop-sudo` protection. Usage is billed to the API project,
+   separately from a ChatGPT subscription. No ChatGPT login cache or Claude token
+   is required for these workflows. The action uses its default model.
 2. **Notion integration**: at https://www.notion.so/profile/integrations create an
    internal integration with read + update + insert content capabilities, then in
    Notion open the TJG Site Docs wiki → ••• → Connections → add the integration.
    Add its token as the `NOTION_TOKEN` repository secret.
 
+The updater installs `@notionhq/notion-mcp-server@2.5.1` before starting Codex.
+Its trusted configuration is written under the runner's temporary directory and
+forwards `NOTION_TOKEN` through the environment; the token is not embedded in the
+prompt or configuration file. Shell commands have read-only access, while the
+Notion MCP tools can update the wiki. This token-based server edits Notion blocks;
+it does not provide the hosted Notion MCP's Markdown `update_content` operation.
+
+To verify setup, run **Update Notion docs** manually on `main` or `beta` and check
+the job's final summary and the Environments page checkpoint. This performs real
+wiki updates. The workflows fail early with an explicit message if a required
+secret is missing. If Notion access or any edit fails, the checkpoint must stay
+unchanged. A manual run needs a valid existing checkpoint; a merged-PR run can
+fall back to that PR's diff but leaves the checkpoint unchanged until the missing
+history has been reconciled.
+
+See the official [Codex GitHub Action](https://learn.chatgpt.com/docs/github-action)
+and [MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+documentation for configuration details.
+
 ### Manual / agent updates
 
-Any agent (Claude Code session, etc.) making a significant change should also
+Any agent (Codex, Claude Code, etc.) making a significant change should also
 update the affected wiki pages and the documentation checkpoint on the
 Environments page. Do not try to update the database hub as a page. The same page map
 above applies. Keep edits surgical: update stale sections in place rather than
