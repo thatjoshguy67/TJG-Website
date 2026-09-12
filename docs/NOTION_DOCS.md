@@ -54,7 +54,8 @@ automatic Codex workflows.
    Both automatic workflows use `openai/codex-action@v1`, which runs Codex through
    its API proxy with `drop-sudo` protection. Usage is billed to the API project,
    separately from a ChatGPT subscription. No ChatGPT login cache or Claude token
-   is required for these workflows. The action uses its default model.
+   is required for these workflows. Both workflows explicitly use
+   `gpt-5.6-terra` with `medium` reasoning effort.
 2. **Notion integration**: at https://www.notion.so/profile/integrations create an
    internal integration with read + update + insert content capabilities, then in
    Notion open the TJG Site Docs wiki → ••• → Connections → add the integration.
