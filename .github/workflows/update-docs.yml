@@ -72,6 +72,8 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: gpt-5.6-terra
+          effort: medium
           codex-home: ${{ runner.temp }}/codex-notion
           # Shell access is read-only; Notion edits use the configured MCP server.
           permission-profile: ":read-only"
