@@ -1,15 +1,29 @@
 import 'server-only';
 import sanitizeHtml from 'sanitize-html';
+import { optimizedBlogImageAttributes, LEADING_IMAGE_TEXT_LIMIT } from './blogImages';
 import { safeContentHref, safeEmbedHref, embedTitle } from './contentUrls';
 /** Normalize rich content before SSR, preserving permitted media and layout. */
-export function sanitizeBlogHtml(html: string): string {
+export function sanitizeBlogHtml(html: string, { prioritizeLeadingImage = true }: { prioritizeLeadingImage?: boolean } = {}): string {
   const ids = new Set<string>();
+  let precedingTextLength = 0;
+  let precedingMedia = false;
+  const groupedMedia: boolean[] = [];
   return sanitizeHtml(html, {
+    onOpenTag: (name, attributes) => {
+      const grouped = /(?:gallery|slideshow|image-compare|ko-compare)/.test(attributes.class || '');
+      groupedMedia.push(grouped || groupedMedia.at(-1) === true);
+      if (grouped || ['iframe', 'video', 'audio', 'table'].includes(name)) precedingMedia = true;
+    },
+    onCloseTag: () => { groupedMedia.pop(); },
+    textFilter: text => {
+      precedingTextLength += text.trim().length;
+      return text;
+    },
     allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img', 'iframe', 'video', 'audio', 'source', 'track', 'figure', 'figcaption'],
     allowedAttributes: {
       '*': ['class', 'id', 'style', 'title', 'lang', 'dir'],
       a: ['href', 'target', 'rel', 'data-src', 'data-iframe-src'],
-      img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'fetchpriority', 'data-full'],
+      img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'fetchpriority', 'data-full', 'srcset', 'sizes'],
       iframe: ['src', 'title', 'width', 'height', 'loading', 'allow', 'allowfullscreen', 'referrerpolicy'],
       video: ['src', 'width', 'height', 'controls', 'preload', 'poster', 'playsinline', 'loop', 'muted'],
       audio: ['src', 'controls', 'preload'], source: ['src', 'type', 'media'],
@@ -29,7 +43,24 @@ export function sanitizeBlogHtml(html: string): string {
       if (tagName === 'img') {
         a.src = safeContentHref(a.src || '', true);
         if (a['data-full']) a['data-full'] = safeContentHref(a['data-full'], true);
-        a.alt = a.alt || ''; a.loading = 'lazy'; a.decoding = 'async'; a.fetchpriority = 'low';
+        // Never forward arbitrary srcset candidates from CMS HTML. Generate our own
+        // for supported sources; leave galleries to their dedicated renderer.
+        delete a.srcset;
+        delete a.sizes;
+        const grouped = groupedMedia.at(-1) === true;
+        const smallImage = Number(a.width) > 0 && Number(a.width) < 200;
+        const leading = prioritizeLeadingImage && Boolean(a.src) && !precedingMedia && !grouped && !smallImage
+          && precedingTextLength <= LEADING_IMAGE_TEXT_LIMIT;
+        if (!grouped) {
+          const full = a['data-full'];
+          Object.assign(a, optimizedBlogImageAttributes(a.src));
+          if (full) a['data-full'] = full;
+        }
+        if (a.src) precedingMedia = true;
+        a.alt = a.alt || '';
+        a.loading = leading ? 'eager' : 'lazy';
+        a.decoding = 'async';
+        a.fetchpriority = leading ? 'high' : 'auto';
       }
       if (tagName === 'iframe') {
         a.src = safeEmbedHref(a.src || ''); a.title = a.title?.trim() || embedTitle(a.src);

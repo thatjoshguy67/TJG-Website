@@ -71,9 +71,9 @@ export function enhanceBlogMedia(scope: HTMLElement): BlogMediaFeatures {
       if (!element.id) element.id = headingId(element, headingIndex);
       headingIndex += 1;
     } else if (element instanceof HTMLImageElement) {
-      element.loading = 'lazy';
+      if (!element.hasAttribute('loading')) element.loading = 'lazy';
       element.decoding = 'async';
-      if (!element.hasAttribute('fetchpriority')) element.fetchPriority = 'low';
+      if (!element.hasAttribute('fetchpriority')) element.fetchPriority = 'auto';
       if (!element.closest('.native-slideshow, .ko-compare, .wp-block-jetpack-image-compare')) fitMedia(element);
       containOffscreenMedia(element);
     } else if (element instanceof HTMLIFrameElement) {

@@ -244,28 +244,6 @@ html[data-theme="dark"] .hero-theme-asset-dark {
   height: 100%;
 }
 
-@keyframes hero-intro-focus {
-  from {
-    filter: blur(14px);
-  }
-
-  to {
-    filter: blur(0);
-  }
-}
-
-@keyframes hero-content-in {
-  from {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes hero-chip-in {
   from {
     opacity: 0;
@@ -306,18 +284,6 @@ html[data-theme="dark"] .hero-theme-asset-dark {
     );
   }
 
-  .home-page .hero-intro {
-    filter: blur(14px);
-  }
-
-  .home-page .hero-college-icon,
-  .home-page .hero-subtitle,
-  .home-page .hero-name,
-  .home-page .hero-description {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-
   .home-page .hero-environment-chip,
   .home-page .hero-scroll-indicator {
     opacity: 0;
@@ -334,23 +300,6 @@ html[data-theme="dark"] .hero-theme-asset-dark {
 
   .home-page .hero-launch-ready .hero-environment-chip {
     animation: hero-chip-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .home-page .hero-launch-ready .hero-intro {
-    animation: hero-intro-focus 440ms cubic-bezier(0.16, 1, 0.3, 1) 20ms both;
-  }
-
-  .home-page .hero-launch-ready .hero-college-icon,
-  .home-page .hero-launch-ready .hero-subtitle {
-    animation: hero-content-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 55ms both;
-  }
-
-  .home-page .hero-launch-ready .hero-name {
-    animation: hero-content-in 480ms cubic-bezier(0.16, 1, 0.3, 1) 110ms both;
-  }
-
-  .home-page .hero-launch-ready .hero-description {
-    animation: hero-content-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
   }
 
   .home-page .hero-launch-ready .hero-scroll-indicator {
@@ -376,31 +325,12 @@ html[data-theme="dark"] .hero-theme-asset-dark {
   white-space: nowrap;
 }
 
-@keyframes hero-name-weight-sweep {
-  0%,
-  100% {
-    font-weight: 700;
-  }
-
-  50% {
-    font-weight: 200;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-page .hero-launch-ready .hero-name-entrance > span {
-    animation: hero-name-weight-sweep 700ms ease-in-out both;
-    animation-delay: calc(
-      var(--hero-reveal-duration) + (var(--animated-text-character-index) * 62ms)
-    );
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-page .hero-name-entrance > span {
-    animation: none;
-    font-weight: 700;
-  }
+/* Intro text is visible in the server HTML. Keep pointer-driven name effects,
+   but do not delay its first paint behind decorative entrance animations. */
+.home-content-loading {
+  min-height: 480px;
+  padding: 40px 20px;
+  color: var(--foreground);
 }
 
 .hero-description {

@@ -140,6 +140,7 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
             >
               <Image
                 src={slide.src}
+                data-full={slide.src}
                 alt={slide.alt}
                 width={1200}
                 height={800}

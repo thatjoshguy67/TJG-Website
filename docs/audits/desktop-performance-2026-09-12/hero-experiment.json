@@ -1,0 +1,99 @@
+[
+  {
+    "run": 1,
+    "variant": "baseline",
+    "fcp": 692,
+    "ttfb": 90.59999999776483,
+    "lcp": [
+      {
+        "time": 2000,
+        "tag": "SPAN",
+        "cls": "",
+        "text": "S",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "run": 1,
+    "variant": "visible-intro",
+    "fcp": 476,
+    "ttfb": 50.399999998509884,
+    "lcp": [
+      {
+        "time": 476,
+        "tag": "SPAN",
+        "cls": "hero-alias",
+        "text": "That Josh Guy",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "run": 2,
+    "variant": "baseline",
+    "fcp": 360,
+    "ttfb": 40.69999999925494,
+    "lcp": [
+      {
+        "time": 1652,
+        "tag": "SPAN",
+        "cls": "",
+        "text": "J",
+        "url": ""
+      },
+      {
+        "time": 1676,
+        "tag": "SPAN",
+        "cls": "",
+        "text": "S",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "run": 2,
+    "variant": "visible-intro",
+    "fcp": 520,
+    "ttfb": 40.29999999701977,
+    "lcp": [
+      {
+        "time": 520,
+        "tag": "SPAN",
+        "cls": "hero-alias",
+        "text": "That Josh Guy",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "run": 3,
+    "variant": "baseline",
+    "fcp": 492,
+    "ttfb": 53,
+    "lcp": [
+      {
+        "time": 1904,
+        "tag": "SPAN",
+        "cls": "",
+        "text": "S",
+        "url": ""
+      }
+    ]
+  },
+  {
+    "run": 3,
+    "variant": "visible-intro",
+    "fcp": 528,
+    "ttfb": 46.400000002235174,
+    "lcp": [
+      {
+        "time": 528,
+        "tag": "SPAN",
+        "cls": "hero-alias",
+        "text": "That Josh Guy",
+        "url": ""
+      }
+    ]
+  }
+]

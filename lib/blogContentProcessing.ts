@@ -75,7 +75,7 @@ export function getDisplayWordCount(storedWordCount: number | null | undefined, 
 }
 
 
-export function processContentWithEmbeds(content: string): string {
+export function processContentWithEmbeds(content: string, imageOptions?: { prioritizeLeadingImage?: boolean }): string {
   let processedContent = content;
 
   Object.entries(EMBED_MAP).forEach(([keyphrase, embedHtml]) => {
@@ -101,5 +101,5 @@ export function processContentWithEmbeds(content: string): string {
     }
   );
 
-  return normalizeHtmlHeadings(sanitizeBlogHtml(processedContent));
+  return normalizeHtmlHeadings(sanitizeBlogHtml(processedContent, imageOptions));
 }

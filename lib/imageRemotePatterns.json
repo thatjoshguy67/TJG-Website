@@ -1,0 +1,51 @@
+[
+  {
+    "protocol": "https",
+    "hostname": "*.wordpress.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "*.wp.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "*.gravatar.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "joshskinnertjg.wordpress.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "static.gumroad.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "public-files.gumroad.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "cdn.sanity.io"
+  },
+  {
+    "protocol": "https",
+    "hostname": "sammyguru.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "www.sammobile.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "m-cdn.phonearena.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "www.androidheadlines.com"
+  },
+  {
+    "protocol": "https",
+    "hostname": "pbs.twimg.com",
+    "pathname": "/media/**"
+  }
+]
