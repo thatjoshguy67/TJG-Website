@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    outputs:
+      report: ${{ steps.update.outputs.final-message }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,9 +66,12 @@ jobs:
           required = true
           startup_timeout_sec = 30
           tool_timeout_sec = 120
+          enabled_tools = ["API-get-block-children", "API-retrieve-a-block", "API-retrieve-a-page", "API-update-a-block", "API-patch-block-children", "API-post-page"]
+          default_tools_approval_mode = "approve"
           TOML
 
       - name: Update wiki from merged changes
+        id: update
         uses: openai/codex-action@v1
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
@@ -78,7 +83,19 @@ jobs:
           # Shell access is read-only; Notion edits use the configured MCP server.
           permission-profile: ":read-only"
           safety-strategy: drop-sudo
-          codex-args: '["--ephemeral"]'
+          codex-args: '["--ephemeral", "--json"]'
+          output-schema: |
+            {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "enum": ["updated", "no_changes", "blocked"] },
+                "summary": { "type": "string" },
+                "checkpoint": { "type": ["string", "null"] },
+                "pages_updated": { "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["status", "summary", "checkpoint", "pages_updated"],
+              "additionalProperties": false
+            }
           prompt: |
             You are the documentation maintainer for this repository. The developer
             docs live in the Notion wiki "TJG Site Docs". The wiki home page and the
@@ -130,3 +147,30 @@ jobs:
             If a review from a valid checkpoint finds no user-facing or
             developer-facing changes (e.g. only lockfile or build-info churn),
             update only that Documentation checkpoint and stop.
+
+            Return the structured report required by the output schema. Use
+            status "blocked" for any failed read, failed edit, or incomplete
+            reconciliation, even if some edits succeeded. Set checkpoint to null
+            unless you successfully recorded and verified the new HEAD checkpoint.
+            Use "no_changes" only when no stale sections needed updating;
+            otherwise use "updated" after all edits and the checkpoint are verified.
+
+  verify-update:
+    needs: update-docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check the updater result
+        uses: actions/github-script@v7
+        env:
+          DOCS_REPORT: ${{ needs.update-docs.outputs.report }}
+        with:
+          script: |
+            const report = JSON.parse(process.env.DOCS_REPORT);
+            core.info(report.summary);
+            if (!['updated', 'no_changes'].includes(report.status) || !report.checkpoint) {
+              core.setFailed(`Notion documentation update incomplete: ${report.summary}`);
+            } else {
+              core.info(`Verified documentation checkpoint: ${report.checkpoint}`);
+            }
