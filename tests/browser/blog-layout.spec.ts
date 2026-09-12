@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,6 +29,31 @@ async function fixture(page: Page, mode = 'post') {
   await expect(page.locator('.native-slideshow__img')).toHaveCount(3);
   await expect.poll(() => page.locator('.native-slideshow__img').evaluateAll(images =>
     images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+}
+
+async function settledToolbarGeometry(toolbar: Locator) {
+  return toolbar.evaluate(async element => {
+    await document.fonts.ready;
+    while (true) {
+      // Flush layout before checking transitions, including ones replaced by
+      // the heading measurement or font loading. Keep real motion enabled.
+      element.getBoundingClientRect();
+      const animations = element.getAnimations({ subtree: true })
+        .filter(animation => animation.pending || animation.playState === 'running');
+      if (!animations.length) break;
+      await Promise.allSettled(animations.map(animation => animation.finished));
+    }
+    const bounds = (node: Element) => {
+      const { x, y, width, height } = node.getBoundingClientRect();
+      return { x, y, width, height };
+    };
+    // Sample all three boxes together so a frame cannot advance between them.
+    return {
+      toolbar: bounds(element),
+      bar: bounds(element.querySelector('.post-search-bar')!),
+      action: bounds(element.querySelector('.post-search-jump')!),
+    };
+  });
 }
 
 for (const mode of ['post', 'index']) {
@@ -62,9 +87,7 @@ for (const width of [320, 390, 1440]) {
     await expect(label).not.toHaveText('Back to top');
     expect(await bar.locator('.post-search-jump').count()).toBe(0);
     const toolbar = page.locator('.post-search-positioner');
-    const toolbarBefore = await toolbar.boundingBox();
-    const before = await bar.boundingBox();
-    const action = await jump.boundingBox();
+    const { toolbar: toolbarBefore, bar: before, action } = await settledToolbarGeometry(toolbar);
     expect(action!.x - (before!.x + before!.width)).toBeGreaterThanOrEqual(7);
     expect(action!.height).toBeCloseTo(before!.height, 0);
     if (width < 700) {
@@ -77,7 +100,7 @@ for (const width of [320, 390, 1440]) {
     await expect(label).toHaveCSS('opacity', '0');
     await expect.poll(async () => (await jump.boundingBox())!.width).toBeCloseTo(56, 0);
     await expect.poll(async () => (await bar.boundingBox())!.width).toBeGreaterThan(before!.width);
-    const toolbarAfter = await toolbar.boundingBox();
+    const { toolbar: toolbarAfter } = await settledToolbarGeometry(toolbar);
     if (width >= 700) expect(toolbarAfter!.width).toBeGreaterThan(toolbarBefore!.width);
     else expect(toolbarAfter!.width).toBeCloseTo(toolbarBefore!.width, 0);
     expect(toolbarAfter!.x + toolbarAfter!.width / 2).toBeCloseTo(toolbarBefore!.x + toolbarBefore!.width / 2, 0);

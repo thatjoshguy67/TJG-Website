@@ -44,6 +44,25 @@ test('interactive images have compatible accessible names and roles', async ({pa
  });
  expect(violations).toEqual([]);
 });
+test('developer Edit links use the document ID from the loaded post', async ({ page, context, baseURL }) => {
+ await context.addCookies([{ name: 'ff-blog-enabled', value: 'true', url: baseURL! }]);
+ const response = await page.request.get('/api/blog/posts?q=One%20UI%20Design%20Kit');
+ expect(response.ok()).toBe(true);
+ const { posts }: { posts: Array<{ id: string; slug: string }> } = await response.json();
+ const post = posts.find(post => post.slug === 'oneui-design-kit');
+ expect(post).toBeDefined();
+ expect(post!.id).not.toBe(post!.slug);
+
+ await page.goto(`/blog/${post!.slug}`);
+ await page.getByRole('button', { name: 'More post options' }).click();
+ const edit = page.getByRole('menuitem', { name: 'Edit', exact: true });
+ await expect(edit).toHaveCount(0);
+ await page.evaluate(() => {
+   localStorage.setItem('developer-options-enabled', 'true');
+   window.dispatchEvent(new Event('developer-options-changed'));
+ });
+ await expect(edit).toHaveAttribute('href', `https://admin.tjg.gg/content/posts/${encodeURIComponent(post!.id)}`);
+});
 test('comparison responds to arrow keys and exposes its value', async ({page}) => {
  await controls(page); const range = page.getByRole('slider', { name: 'Image comparison position' });
  await range.scrollIntoViewIfNeeded(); await range.focus(); await page.keyboard.press('ArrowRight');

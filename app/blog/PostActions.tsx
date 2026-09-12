@@ -12,7 +12,7 @@ import { localPreferences } from "../../lib/browserStorage";
 import { useTheme } from "../components/ThemeProvider";
 import { usePathname, useRouter } from "next/navigation";
 
-export default function PostActions({ slug, preview = false }: { slug: string; preview?: boolean }) {
+export default function PostActions({ slug, postId, preview = false }: { slug: string; postId?: string; preview?: boolean }) {
   const { preferences: savedPreferences, setPreferences: savePreferences, ready } = useReadingPreferences();
   const [previewPreferences, setPreviewPreferences] = useState({ compact: false, focus: false, search: true });
   const preferences = preview ? previewPreferences : savedPreferences;
@@ -141,8 +141,8 @@ export default function PostActions({ slug, preview = false }: { slug: string; p
             </>
           )}
           <button role="menuitem" onClick={copyLink}><span className="post-options-action-label"><Copy size={20} color="var(--primary)" aria-hidden="true" />Copy link</span></button>
-          {!preview && devOptionsEnabled && (
-            <a role="menuitem" href={`https://admin.tjg.gg/content/posts/${encodeURIComponent(slug)}`} onClick={() => setOpen(false)}>
+          {!preview && devOptionsEnabled && postId && (
+            <a role="menuitem" href={`https://admin.tjg.gg/content/posts/${encodeURIComponent(postId)}`} onClick={() => setOpen(false)}>
               <span className="post-options-action-label"><Edit size={20} color="var(--primary)" aria-hidden="true" />Edit</span>
             </a>
           )}

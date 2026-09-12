@@ -161,7 +161,7 @@ async function BlogPostBody({ slug }: { slug: string }) {
         collapseTarget=".post-hero-card"
         actions={
           <>
-            <PostActions slug={slug} />
+            <PostActions slug={slug} postId={content.id} />
           </>
         }
       />
