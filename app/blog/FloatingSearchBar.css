@@ -1,0 +1,293 @@
+/* --- Floating Search Bar --- */
+
+.floating-search-anchor {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  z-index: 999;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.floating-search-positioner {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-search-positioner:focus-within {
+  max-width: 760px;
+}
+
+@media (min-width: 700px) {
+  .floating-search-anchor:not(.floating-search-anchor--inline) {
+    /* Match the post toolbar's stable position beside the navigation rail. */
+    left: max(8%, 88px);
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 699px) {
+  .floating-search-anchor {
+    bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    transform: none;
+    width: calc(100% - 32px);
+    max-width: 348px;
+    padding: 0;
+    margin: 0 auto;
+    transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .floating-search-anchor:focus-within {
+    max-width: 510px;
+  }
+  .floating-search-positioner {
+    max-width: none;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-search-anchor,
+  .floating-search-positioner {
+    transition: none;
+  }
+}
+
+.floating-search-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--container-background) 85%, transparent);
+  border-radius: 999px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0,0,0,0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-theme="dark"] .floating-search-bar {
+  border-color: rgba(255,255,255,0.1);
+}
+
+
+
+.floating-search-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--secondary);
+  opacity: 1;
+}
+
+.floating-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--primary);
+  font-family: 'One UI Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 2px 0;
+  margin: 0;
+}
+
+.floating-search-input::placeholder {
+  color: var(--secondary);
+  opacity: 1;
+}
+
+.floating-search-clear {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--secondary) 20%, transparent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--primary);
+  opacity: 0.7;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  border-radius: 50%;
+}
+
+.floating-search-clear:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--secondary) 30%, transparent);
+}
+
+.floating-search-filter-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 45%;
+  background: var(--accent-control);
+  border-radius: 999px;
+  padding: 0 0 0 12px;
+  overflow: hidden;
+}
+
+.floating-search-filter-chip-label {
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--on-accent);
+  font-family: 'One UI Sans', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floating-search-filter-chip-close {
+  background: none;
+  border: none;
+  color: color-mix(in srgb, var(--on-accent) 72%, transparent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.floating-search-filter-chip-close:hover {
+  color: #fff;
+}
+
+.floating-search-filter-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--secondary);
+  opacity: 1;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  border-radius: 50%;
+}
+
+.floating-search-filter-btn:hover {
+  background: color-mix(in srgb, var(--secondary) 12%, transparent);
+}
+
+.floating-search-filter-menu {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: 20px;
+  pointer-events: auto;
+  background-color: var(--container-background);
+  border: none;
+  border-radius: var(--br-lg, 16px);
+  padding: 8px;
+  min-width: 180px;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: filterMenuIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes filterMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.floating-search-filter-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.floating-search-filter-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.floating-search-filter-menu::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--secondary) 30%, transparent);
+  border-radius: 2px;
+}
+
+.floating-search-filter-item {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-family: 'One UI Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: var(--br-sm, 10px);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.floating-search-filter-item:hover {
+  background: color-mix(in srgb, var(--secondary) 12%, transparent);
+}
+
+.floating-search-filter-item[data-selected="true"] {
+  background: var(--accent-control);
+  color: var(--on-accent);
+}
+
+.floating-search-filter-item[data-selected="true"]:hover {
+  background: var(--accent-control);
+}
+
+/* The playground embeds the same control inside its column. */
+body .floating-search-anchor.floating-search-anchor--inline {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  z-index: 1;
+}
+
+.floating-search-anchor--inline .floating-search-positioner {
+  max-width: none;
+  padding: 0;
+}
+
+.floating-search-anchor--inline .floating-search-filter-menu {
+  top: calc(100% + 12px);
+  bottom: auto;
+  right: 0;
+}

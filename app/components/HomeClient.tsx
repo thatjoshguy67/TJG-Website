@@ -1,17 +1,15 @@
 "use client";
-import { stripHtmlAndDecode } from "../../lib/portableText";
 import Image from "next/image";
 import Link from "next/link";
-import AnimatedText from "./AnimatedText";
-import { Education, Location } from '@thatjoshguy/oneui-icons';
+import { Location } from '@thatjoshguy/oneui-icons';
 import Footer from "./Footer";
-import { CSSProperties, ReactElement, ReactNode, RefObject, Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CarouselContentCard } from "./ContentCards";
+import { CSSProperties, ReactElement, ReactNode, RefObject, Suspense, lazy, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from './ThemeProvider';
 import type { FeaturedStory } from "../../lib/featured-stories";
 import type { Project } from "../../lib/projects";
 import type { RecentBlogPost } from "../../lib/recent-blog-posts";
 import type { ProfileFact } from "../../lib/home-profile";
-import TopAppBar from "./TopAppBar";
 
 interface StackTool {
   name: string;
@@ -116,6 +114,10 @@ function FoldIcon({ size = 24, color = "currentColor" }: { size?: number; color?
   );
 }
 
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 function SmoothHoverCard({
   children,
   corners = CARD_CORNERS,
@@ -124,8 +126,11 @@ function SmoothHoverCard({
   corners?: typeof CARD_CORNERS;
 }) {
   const { cornerSmoothing, cornerSmoothingAvailable, cornerSmoothingSupported, hydrated } = useTheme();
+  // The provider may already be hydrated when this streamed card first arrives.
+  // Its first client tree must still match the server's plain child element.
+  const cardHydrated = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
 
-  if (!hydrated || !cornerSmoothingAvailable || !cornerSmoothingSupported || !cornerSmoothing) {
+  if (!cardHydrated || !hydrated || !cornerSmoothingAvailable || !cornerSmoothingSupported || !cornerSmoothing) {
     return children;
   }
 
@@ -571,8 +576,6 @@ export default function HomeClient({
   recentBlogPostsEnabled = true,
   recentBlogPosts = [],
   profileFacts,
-  environmentLabel,
-  isCollege = false,
 }: {
   featuredStories: FeaturedStory[];
   projects?: Project[];
@@ -582,8 +585,6 @@ export default function HomeClient({
   recentBlogPostsEnabled?: boolean;
   recentBlogPosts?: RecentBlogPost[];
   profileFacts: ProfileFact[];
-  environmentLabel: "Beta" | "Dev" | null;
-  isCollege?: boolean;
 }) {
   const stackTools: StackTool[] = [
     { name: 'Todoist', icon: '/images/stack/todoist.png' },
@@ -604,8 +605,6 @@ export default function HomeClient({
     { name: 'Codex Meter', icon: '/images/stack/termius.png' },
   ];
   const stackRows = [stackTools.slice(0, 8), stackTools.slice(8)];
-  const heroRef = useRef<HTMLDivElement>(null);
-  const [heroLaunchReady, setHeroLaunchReady] = useState(false);
   const publicationMarqueeRef = useRef<HTMLDivElement>(null);
   const stackMarqueeRef = useRef<HTMLDivElement>(null);
   const marqueeMotionTargets = useMemo<MarqueeMotionTarget[]>(() => [
@@ -622,357 +621,247 @@ export default function HomeClient({
   ], []);
   useAdaptiveMarqueeMotion(marqueeMotionTargets);
 
-  useLayoutEffect(() => {
-    const navigationEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    if (navigationEntry?.type === "reload" && window.scrollY > 0) {
-      window.scrollTo(0, 0);
-    }
-  }, []);
-
   useEffect(() => {
-    const hero = heroRef.current;
-    if (!hero) return;
-
-    let cancelled = false;
-    let launchReady = false;
-    let firstFrame = 0;
-    let secondFrame = 0;
-    let timeout = 0;
-    const markHeroLaunchReady = () => {
-      if (cancelled || launchReady) return;
-      launchReady = true;
-      window.clearTimeout(timeout);
-      setHeroLaunchReady(true);
-    };
-    const images = Array.from(hero.querySelectorAll<HTMLImageElement>(".hero-mesh img"));
-    const decoded = images.map(async (image) => {
-      if (!image.complete) {
-        await new Promise<void>((resolve) => {
-          image.addEventListener("load", () => resolve(), { once: true });
-          image.addEventListener("error", () => resolve(), { once: true });
-        });
-      }
-
-      if (typeof image.decode === "function") {
-        await image.decode().catch(() => undefined);
-      }
-    });
-
-    timeout = window.setTimeout(markHeroLaunchReady, 900);
-
-    void Promise.all(decoded).then(() => {
-      if (cancelled) return;
-
-      firstFrame = requestAnimationFrame(() => {
-        secondFrame = requestAnimationFrame(() => {
-          markHeroLaunchReady();
-        });
-      });
-    });
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-      cancelAnimationFrame(firstFrame);
-      cancelAnimationFrame(secondFrame);
-    };
+    // The target may arrive after the browser's initial fragment scroll attempt.
+    // Do not pull someone back if they have already scrolled while data loads.
+    if (!window.location.hash || window.scrollY > 0) return;
+    let target: HTMLElement | null;
+    try { target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); }
+    catch { return; }
+    if (!target) return;
+    const frame = requestAnimationFrame(() => target.scrollIntoView({ behavior: 'instant', block: 'start' }));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
-    <div className="page home-page">
-      <div className="page-body">
-        <div className="main-content">
-          <TopAppBar mobileSettingsHref="/settings?from=%2F" />
-          {/* Hero + Role Cards Layout */}
-          <div
-            ref={heroRef}
-            className={`hero-role-wrapper${heroLaunchReady ? " hero-launch-ready" : ""}`}
-          >
-            {environmentLabel && (
-              <span className="beta-chip hero-environment-chip">{isCollege ? `College ${environmentLabel}` : environmentLabel}</span>
-            )}
-            {/* Hero Section */}
-            <div className="hero-section">
-              <div className="hero-mesh" aria-hidden="true">
-                <Image src="/images/home/hero/mesh-light-left.svg" alt="" width={1637} height={1603} className="hero-mesh-layer hero-mesh-light hero-mesh-light-left" priority />
-                <Image src="/images/home/hero/mesh-light-center.svg" alt="" width={1637} height={1603} className="hero-mesh-layer hero-mesh-light hero-mesh-light-center" priority />
-                <Image src="/images/home/hero/mesh-light-right.svg" alt="" width={1624} height={1716} className="hero-mesh-layer hero-mesh-light hero-mesh-light-right" priority />
-                <Image src="/images/home/hero/mesh-dark-left.svg" alt="" width={1777} height={1743} className="hero-mesh-layer hero-mesh-dark hero-mesh-dark-left" priority />
-                <Image src="/images/home/hero/mesh-dark-center.svg" alt="" width={1777} height={1743} className="hero-mesh-layer hero-mesh-dark hero-mesh-dark-center" priority />
-                <Image src="/images/home/hero/mesh-dark-right.svg" alt="" width={1764} height={1856} className="hero-mesh-layer hero-mesh-dark hero-mesh-dark-right" priority />
-              </div>
-              <div className="hero-intro">
-                {isCollege && (
-                  <span className="hero-college-icon" role="img" aria-label="College portfolio">
-                    <Education size={64} color="currentColor" aria-hidden="true" />
-                  </span>
-                )}
-                <span className="hero-subtitle">Hey, I&apos;m</span>
-                <h1 className="hero-name">
-                  <AnimatedText text="Josh Skinner" className="hero-name-entrance" inverse />
-                </h1>
-                <div className="hero-description">
-                  <span>aka</span>
-                  <span className="hero-brand-mark" aria-hidden="true">
-                    <Image src="/images/home/hero/brand-light.svg" alt="" width={37} height={25} className="hero-theme-asset hero-theme-asset-light" />
-                    <Image src="/images/home/hero/brand-dark.svg" alt="" width={37} height={25} className="hero-theme-asset hero-theme-asset-dark" />
-                  </span>
-                  <span className="hero-alias">That Josh Guy</span>
-                </div>
-              </div>
-              <a href="#about" className="hero-scroll-indicator" aria-label="Scroll to About">
-                <Image src="/images/home/hero/arrow-light.svg" alt="" width={76} height={40} className="hero-scroll-arrow hero-theme-asset hero-theme-asset-light" />
-                <Image src="/images/home/hero/arrow-dark.svg" alt="" width={76} height={40} className="hero-scroll-arrow hero-theme-asset hero-theme-asset-dark" />
-              </a>
-            </div>
+    <>
+      {/* About Section */}
+      <section className="about-section" id="about">
+        <div className="about-copy">
+          <h2 className="about-headline">Hey,</h2>
+          <p className="about-text">
+            I&apos;m Josh, a designer, journalist and lifelong Samsung enthusiast based in the south of the UK. I follow everything Samsung, from their software updates, UX design, to even hardware leaks.
+          </p>
+          <p className="about-text">
+            I work with <a href="https://sammyguru.com/author/josh_skinner/" target="_blank" rel="noopener noreferrer">SammyGuru</a>, and contribute to publications like <a href="https://9to5google.com/" target="_blank" rel="noopener noreferrer">9to5Google</a>, <a href="https://www.sammobile.com/" target="_blank" rel="noopener noreferrer">SamMobile</a> and <a href="https://www.androidauthority.com/" target="_blank" rel="noopener noreferrer">Android Authority</a>.
+          </p>
+          <p className="about-text">
+            I&apos;ve recreated One UI&apos;s design system in Figma with the <Link href="/blog/oneui-design-kit">One UI Design Kit</Link>, letting enthusiasts and developers create native looking interfaces.
+          </p>
+          <p className="about-text">
+            In early 2026, I leaked animations on how the <a href="https://sammyguru.com/galaxy-s26-ultra-privacy-display-animation/" target="_blank" rel="noopener noreferrer">Galaxy S26 Ultra&apos;s Privacy Display</a> worked, showed off <a href="https://sammyguru.com/exclusive-samsung-internet-gets-massive-redesign-in-one-ui-8-0/" target="_blank" rel="noopener noreferrer">Samsung Internet&apos;s redesign</a> in Nov 2025, and was first to share the update artwork for <a href="https://x.com/thatjoshguy69" target="_blank" rel="noopener noreferrer">One UI 9.5</a>.
+          </p>
+          <p className="about-text">
+            I also review the latest and greatest Samsung tech for <a href="https://sammyguru.com/author/josh_skinner/" target="_blank" rel="noopener noreferrer">SammyGuru</a>, and dig through Samsung&apos;s applications for signs of unreleased hardware and new features.
+          </p>
+          <p className="about-text">
+            I also overhauled <a href="https://sammyguru.com/" target="_blank" rel="noopener noreferrer">SammyGuru&apos;s brand identity</a>, bringing a cohesive colour system with a new logo and social media branding.
+          </p>
+        </div>
 
-          </div>
+        <aside className="about-aside" aria-label="Profile details">
+          <figure className="about-portrait">
+            <Image
+              src="/images/home/about/london.jpg"
+              alt="Josh Skinner beside the River Thames in London, with Tower Bridge behind him"
+              fill
+              sizes="(max-width: 699px) calc(100vw - 40px), 414px"
+              className="about-portrait-image"
+            />
+            <figcaption className="about-location">
+              <Location size={28} color="currentColor" />
+              <span>London</span>
+            </figcaption>
+          </figure>
 
-          {/* About Section */}
-          <section className="about-section" id="about">
-            <div className="about-copy">
-              <h2 className="about-headline">Hey,</h2>
-              <p className="about-text">
-                I&apos;m Josh, a designer, journalist and lifelong Samsung enthusiast based in the south of the UK. I follow everything Samsung, from their software updates, UX design, to even hardware leaks.
-              </p>
-              <p className="about-text">
-                I work with <a href="https://sammyguru.com/author/josh_skinner/" target="_blank" rel="noopener noreferrer">SammyGuru</a>, and contribute to publications like <a href="https://9to5google.com/" target="_blank" rel="noopener noreferrer">9to5Google</a>, <a href="https://www.sammobile.com/" target="_blank" rel="noopener noreferrer">SamMobile</a> and <a href="https://www.androidauthority.com/" target="_blank" rel="noopener noreferrer">Android Authority</a>.
-              </p>
-              <p className="about-text">
-                I&apos;ve recreated One UI&apos;s design system in Figma with the <Link href="/blog/oneui-design-kit">One UI Design Kit</Link>, letting enthusiasts and developers create native looking interfaces.
-              </p>
-              <p className="about-text">
-                In early 2026, I leaked animations on how the <a href="https://sammyguru.com/galaxy-s26-ultra-privacy-display-animation/" target="_blank" rel="noopener noreferrer">Galaxy S26 Ultra&apos;s Privacy Display</a> worked, showed off <a href="https://sammyguru.com/exclusive-samsung-internet-gets-massive-redesign-in-one-ui-8-0/" target="_blank" rel="noopener noreferrer">Samsung Internet&apos;s redesign</a> in Nov 2025, and was first to share the update artwork for <a href="https://x.com/thatjoshguy69" target="_blank" rel="noopener noreferrer">One UI 9.5</a>.
-              </p>
-              <p className="about-text">
-                I also review the latest and greatest Samsung tech for <a href="https://sammyguru.com/author/josh_skinner/" target="_blank" rel="noopener noreferrer">SammyGuru</a>, and dig through Samsung&apos;s applications for signs of unreleased hardware and new features.
-              </p>
-              <p className="about-text">
-                I also overhauled <a href="https://sammyguru.com/" target="_blank" rel="noopener noreferrer">SammyGuru&apos;s brand identity</a>, bringing a cohesive colour system with a new logo and social media branding.
-              </p>
-            </div>
+          <ul className="list-group home-facts-list" aria-label="A few facts about Josh">
+            {profileFacts.map((fact) => (
+              <li className="list home-fact-item" key={fact.icon}>
+                <span className={`home-fact-icon home-fact-icon-${fact.icon}`} aria-hidden="true">
+                  {fact.icon === "phone" && <FoldIcon size={24} color="currentColor" />}
+                  {fact.icon === "game" && (
+                    <Image src="/images/home/about/persona-3-reload.png" alt="" width={24} height={29} />
+                  )}
+                  {fact.icon === "f1" && (
+                    <Image src="/images/home/about/lewis-hamilton.svg" alt="" width={28} height={16} />
+                  )}
+                </span>
+                <span className="home-fact-copy">
+                  <span className="home-fact-label">{fact.label}</span>
+                  <span className="home-fact-value">{fact.value}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
 
-            <aside className="about-aside" aria-label="Profile details">
-              <figure className="about-portrait">
-                <Image
-                  src="/images/home/about/london.jpg"
-                  alt="Josh Skinner beside the River Thames in London, with Tower Bridge behind him"
-                  fill
-                  sizes="(max-width: 699px) calc(100vw - 40px), 414px"
-                  className="about-portrait-image"
-                />
-                <figcaption className="about-location">
-                  <Location size={28} color="currentColor" />
-                  <span>London</span>
-                </figcaption>
-              </figure>
+        </aside>
+      </section>
 
-              <ul className="list-group home-facts-list" aria-label="A few facts about Josh">
-                {profileFacts.map((fact) => (
-                  <li className="list home-fact-item" key={fact.icon}>
-                    <span className={`home-fact-icon home-fact-icon-${fact.icon}`} aria-hidden="true">
-                      {fact.icon === "phone" && <FoldIcon size={24} color="currentColor" />}
-                      {fact.icon === "game" && (
-                        <Image src="/images/home/about/persona-3-reload.png" alt="" width={24} height={29} />
-                      )}
-                      {fact.icon === "f1" && (
-                        <Image src="/images/home/about/lewis-hamilton.svg" alt="" width={28} height={16} />
-                      )}
-                    </span>
-                    <span className="home-fact-copy">
-                      <span className="home-fact-label">{fact.label}</span>
-                      <span className="home-fact-value">{fact.value}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+      {/* Journalist Section */}
+      <div className="journalist-section">
+        <h2 className="journalist-headline">Featured In</h2>
+        <div ref={publicationMarqueeRef} className="publications-marquee-wrapper">
+          <div className="publications-marquee publications-marquee-forward">
+            {[0, 1].map((copy) => (
+            <div
+              className="publications-marquee-content"
+              key={copy}
+              aria-hidden={copy === 1 ? true : undefined}
+            >
+              {[
+                { name: 'SammyGuru', logo: '/images/home/svg/sammyguru-2026.svg' },
+                { name: 'XDA Developers', logo: '/images/home/svg/xda-developers.svg' },
+                { name: 'Android Authority', logo: '/images/home/svg/android-authority.svg' },
+                { name: '9to5Google', logo: '/images/home/svg/9to5google.svg' },
 
-            </aside>
-          </section>
-
-          {/* Journalist Section */}
-          <div className="journalist-section">
-            <h2 className="journalist-headline">Featured In</h2>
-            <div ref={publicationMarqueeRef} className="publications-marquee-wrapper">
-              <div className="publications-marquee publications-marquee-forward">
-                {[0, 1].map((copy) => (
-                <div
-                  className="publications-marquee-content"
-                  key={copy}
-                  aria-hidden={copy === 1 ? true : undefined}
+              ].map((pub, index) => (
+                <a
+                  key={`${copy}-${index}`}
+                  className="publication-item"
+                  href={PUBLICATION_URLS[pub.name]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={pub.name}
+                  data-publication={pub.name}
+                  tabIndex={copy === 1 ? -1 : undefined}
                 >
-                  {[
-                    { name: 'SammyGuru', logo: '/images/home/svg/sammyguru-2026.svg' },
-                    { name: 'XDA Developers', logo: '/images/home/svg/xda-developers.svg' },
-                    { name: 'Android Authority', logo: '/images/home/svg/android-authority.svg' },
-                    { name: '9to5Google', logo: '/images/home/svg/9to5google.svg' },
-                    
-                  ].map((pub, index) => (
-                    <a
-                      key={`${copy}-${index}`}
-                      className="publication-item"
-                      href={PUBLICATION_URLS[pub.name]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={pub.name}
-                      data-publication={pub.name}
-                      tabIndex={copy === 1 ? -1 : undefined}
-                    >
-                      <PublicationLogo logo={pub.logo} alt={pub.name} />
-                    </a>
-                  ))}
-                </div>
-                ))}
-              </div>
-              <div className="publications-marquee publications-marquee-reverse">
-                {[0, 1].map((copy) => (
-                  <div
-                    className="publications-marquee-content"
-                    key={copy}
-                    aria-hidden={copy === 1 ? true : undefined}
-                  >
-                    {SECONDARY_PUBLICATIONS.map((pub, index) => (
-                      <a
-                        key={`${copy}-${index}`}
-                        className="publication-item"
-                        href={PUBLICATION_URLS[pub.name]}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={pub.name}
-                        data-publication={pub.name}
-                        tabIndex={copy === 1 ? -1 : undefined}
-                      >
-                        <PublicationLogo logo={pub.logo} alt={pub.name} />
-                      </a>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {popularStoriesEnabled && featuredStories.length > 0 && (
-            <div className="featured-stories-section">
-              <h2 className="featured-stories-headline">Popular articles</h2>
-              <div className="featured-stories-scroll-wrapper">
-                <EdgeMaskedCarousel className="featured-stories-scroll">
-                  <div className="featured-stories-scroll-inner">
-                    {featuredStories.map((story, index) => (
-                      <StoryCard key={index} story={story} />
-                    ))}
-                  </div>
-                </EdgeMaskedCarousel>
-              </div>
-            </div>
-          )}
-
-          {/* Projects Preview */}
-          {projectsEnabled && projects.length > 0 && (
-            <section className="design-projects-section projects-showcase-section" id="design-work">
-              <h2 className="design-projects-headline">Projects</h2>
-              <div className="design-projects-scroll-wrapper">
-                <EdgeMaskedCarousel className="design-projects-scroll">
-                  <div className="design-projects-scroll-inner">
-                    {projects.map((project, index) => (
-                      <ProjectCard key={index} project={project} />
-                    ))}
-                  </div>
-                </EdgeMaskedCarousel>
-              </div>
-            </section>
-          )}
-
-          {/* Tools */}
-          <div className="stack-section">
-            <div className="stack-text">
-              <h2 className="stack-headline">Tools I use</h2>
-            </div>
-            <div className="stack-icon-grid">
-              {stackTools.map((tool, index) => (
-                <StackIcon key={index} tool={tool} />
+                  <PublicationLogo logo={pub.logo} alt={pub.name} />
+                </a>
               ))}
             </div>
-            <div ref={stackMarqueeRef} className="stack-marquee-rows">
-              <StackMarquee tools={stackRows[0]} />
-              <StackMarquee tools={stackRows[1]} reverse />
-            </div>
-            <div className="stack-marquee-wrapper stack-marquee-wide-wrapper">
-              <div className="stack-marquee-wide-content">
-                {stackTools.map((tool) => (
-                  <StackIcon key={`wide-${tool.name}`} tool={tool} />
+            ))}
+          </div>
+          <div className="publications-marquee publications-marquee-reverse">
+            {[0, 1].map((copy) => (
+              <div
+                className="publications-marquee-content"
+                key={copy}
+                aria-hidden={copy === 1 ? true : undefined}
+              >
+                {SECONDARY_PUBLICATIONS.map((pub, index) => (
+                  <a
+                    key={`${copy}-${index}`}
+                    className="publication-item"
+                    href={PUBLICATION_URLS[pub.name]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={pub.name}
+                    data-publication={pub.name}
+                    tabIndex={copy === 1 ? -1 : undefined}
+                  >
+                    <PublicationLogo logo={pub.logo} alt={pub.name} />
+                  </a>
                 ))}
               </div>
-            </div>
+            ))}
           </div>
-
-          {recentBlogPostsEnabled && recentBlogPosts.length > 0 && (
-            <div className="design-projects-section">
-              <h2 className="design-projects-headline">Recent Blog Posts</h2>
-              <div className="design-projects-scroll-wrapper">
-                <EdgeMaskedCarousel className="design-projects-scroll">
-                  <div className="design-projects-scroll-inner">
-                    {recentBlogPosts.map((post) => (
-                      <SmoothHoverCard key={post.id}>
-                        <Link href={`/blog/${post.slug}`} className="design-project-card">
-                          <div className="design-project-thumbnail">
-                            {post.thumbnail && (
-                              <Image
-                                src={post.thumbnail}
-                                alt={post.title.replace(/<[^>]*>/g, '')}
-                                width={400}
-                                height={225}
-                                className="design-project-image"
-                              />
-                            )}
-                          </div>
-                          <div className="design-project-info">
-                            <span className="design-project-title" >{stripHtmlAndDecode(post.title)}</span>
-                            <span className="design-project-tag">Blog</span>
-                          </div>
-                        </Link>
-                      </SmoothHoverCard>
-                    ))}
-                  </div>
-                </EdgeMaskedCarousel>
-              </div>
-            </div>
-          )}
-
-          {miscSectionEnabled && (
-            <div className="section">
-              <div className="section-header">
-                <h2 className="title">Misc</h2>
-              </div>
-
-              <div className="list-group">
-                <a href="https://legacy.tjg.gg" className="list">
-                  <div className="list-item-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <mask id="mask0_misc_home" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
-                        <rect width="24" height="24" fill="#D9D9D9" />
-                      </mask>
-                      <g mask="url(#mask0_misc_home)">
-                        <path
-                          d="M4.825 12.025L8.7 15.9C8.88334 16.0833 8.975 16.3167 8.975 16.6C8.975 16.8833 8.88334 17.1167 8.7 17.3C8.51667 17.4833 8.28334 17.575 8 17.575C7.71667 17.575 7.48334 17.4833 7.3 17.3L2.7 12.7C2.6 12.6 2.52917 12.4917 2.4875 12.375C2.44584 12.2583 2.425 12.1333 2.425 12C2.425 11.8667 2.44584 11.7417 2.4875 11.625C2.52917 11.5083 2.6 11.4 2.7 11.3L7.3 6.7C7.5 6.5 7.7375 6.4 8.0125 6.4C8.2875 6.4 8.525 6.5 8.725 6.7C8.925 6.9 9.025 7.1375 9.025 7.4125C9.025 7.6875 8.925 7.925 8.725 8.125L4.825 12.025ZM19.175 11.975L15.3 8.1C15.1167 7.91667 15.025 7.68333 15.025 7.4C15.025 7.11667 15.1167 6.88333 15.3 6.7C15.4833 6.51667 15.7167 6.425 16 6.425C16.2833 6.425 16.5167 6.51667 16.7 6.7L21.3 11.3C21.4 11.4 21.4708 11.5083 21.5125 11.625C21.5542 11.7417 21.575 11.8667 21.575 12C21.575 12.1333 21.5542 12.2583 21.5125 12.375C21.4708 12.4917 21.4 12.6 21.3 12.7L16.7 17.3C16.5 17.5 16.2667 17.5958 16 17.5875C15.7333 17.5792 15.5 17.475 15.3 17.275C15.1 17.075 15 16.8375 15 16.5625C15 16.2875 15.1 16.05 15.3 15.85L19.175 11.975Z"
-                          fill="var(--accent)"
-                        />
-                      </g>
-                    </svg>
-                  </div>
-                  <div className="list-item-content">
-                    <div className="body-text">My old site</div>
-                    <div className="information-wrapper">
-                      <div className="information">legacy.tjg.gg, made in conjunction with Dhiren Vasnani</div>
-                    </div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          )}
-
-          <Footer />
         </div>
       </div>
-    </div>
+
+      {popularStoriesEnabled && featuredStories.length > 0 && (
+        <div className="featured-stories-section">
+          <h2 className="featured-stories-headline">Popular articles</h2>
+          <div className="featured-stories-scroll-wrapper">
+            <EdgeMaskedCarousel className="featured-stories-scroll">
+              <div className="featured-stories-scroll-inner">
+                {featuredStories.map((story, index) => (
+                  <StoryCard key={index} story={story} />
+                ))}
+              </div>
+            </EdgeMaskedCarousel>
+          </div>
+        </div>
+      )}
+
+      {/* Projects Preview */}
+      {projectsEnabled && projects.length > 0 && (
+        <section className="design-projects-section projects-showcase-section" id="design-work">
+          <h2 className="design-projects-headline">Projects</h2>
+          <div className="design-projects-scroll-wrapper">
+            <EdgeMaskedCarousel className="design-projects-scroll">
+              <div className="design-projects-scroll-inner">
+                {projects.map((project, index) => (
+                  <ProjectCard key={index} project={project} />
+                ))}
+              </div>
+            </EdgeMaskedCarousel>
+          </div>
+        </section>
+      )}
+
+      {/* Tools */}
+      <div className="stack-section">
+        <div className="stack-text">
+          <h2 className="stack-headline">Tools I use</h2>
+        </div>
+        <div className="stack-icon-grid">
+          {stackTools.map((tool, index) => (
+            <StackIcon key={index} tool={tool} />
+          ))}
+        </div>
+        <div ref={stackMarqueeRef} className="stack-marquee-rows">
+          <StackMarquee tools={stackRows[0]} />
+          <StackMarquee tools={stackRows[1]} reverse />
+        </div>
+        <div className="stack-marquee-wrapper stack-marquee-wide-wrapper">
+          <div className="stack-marquee-wide-content">
+            {stackTools.map((tool) => (
+              <StackIcon key={`wide-${tool.name}`} tool={tool} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {recentBlogPostsEnabled && recentBlogPosts.length > 0 && (
+        <div className="design-projects-section">
+          <h2 className="design-projects-headline">Recent Blog Posts</h2>
+          <div className="design-projects-scroll-wrapper">
+            <EdgeMaskedCarousel className="design-projects-scroll">
+              <div className="design-projects-scroll-inner">
+                {recentBlogPosts.map((post) => (
+                  <SmoothHoverCard key={post.id}>
+                    <CarouselContentCard post={post} />
+                  </SmoothHoverCard>
+                ))}
+              </div>
+            </EdgeMaskedCarousel>
+          </div>
+        </div>
+      )}
+
+      {miscSectionEnabled && (
+        <div className="section">
+          <div className="section-header">
+            <h2 className="title">Misc</h2>
+          </div>
+
+          <div className="list-group">
+            <a href="https://legacy.tjg.gg" className="list">
+              <div className="list-item-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <mask id="mask0_misc_home" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+                    <rect width="24" height="24" fill="#D9D9D9" />
+                  </mask>
+                  <g mask="url(#mask0_misc_home)">
+                    <path
+                      d="M4.825 12.025L8.7 15.9C8.88334 16.0833 8.975 16.3167 8.975 16.6C8.975 16.8833 8.88334 17.1167 8.7 17.3C8.51667 17.4833 8.28334 17.575 8 17.575C7.71667 17.575 7.48334 17.4833 7.3 17.3L2.7 12.7C2.6 12.6 2.52917 12.4917 2.4875 12.375C2.44584 12.2583 2.425 12.1333 2.425 12C2.425 11.8667 2.44584 11.7417 2.4875 11.625C2.52917 11.5083 2.6 11.4 2.7 11.3L7.3 6.7C7.5 6.5 7.7375 6.4 8.0125 6.4C8.2875 6.4 8.525 6.5 8.725 6.7C8.925 6.9 9.025 7.1375 9.025 7.4125C9.025 7.6875 8.925 7.925 8.725 8.125L4.825 12.025ZM19.175 11.975L15.3 8.1C15.1167 7.91667 15.025 7.68333 15.025 7.4C15.025 7.11667 15.1167 6.88333 15.3 6.7C15.4833 6.51667 15.7167 6.425 16 6.425C16.2833 6.425 16.5167 6.51667 16.7 6.7L21.3 11.3C21.4 11.4 21.4708 11.5083 21.5125 11.625C21.5542 11.7417 21.575 11.8667 21.575 12C21.575 12.1333 21.5542 12.2583 21.5125 12.375C21.4708 12.4917 21.4 12.6 21.3 12.7L16.7 17.3C16.5 17.5 16.2667 17.5958 16 17.5875C15.7333 17.5792 15.5 17.475 15.3 17.275C15.1 17.075 15 16.8375 15 16.5625C15 16.2875 15.1 16.05 15.3 15.85L19.175 11.975Z"
+                      fill="var(--accent)"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <div className="list-item-content">
+                <div className="body-text">My old site</div>
+                <div className="information-wrapper">
+                  <div className="information">legacy.tjg.gg, made in conjunction with Dhiren Vasnani</div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </>
   );
 }

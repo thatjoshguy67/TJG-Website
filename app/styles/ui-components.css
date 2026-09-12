@@ -160,8 +160,31 @@ input:checked + .slider {
     vertical-align: middle;
 }
 
+/* Shared placeholders used by route loading screens. */
+:root {
+    --skeleton-base: color-mix(in srgb, var(--secondary) 12%, var(--container-background));
+    --skeleton-highlight: color-mix(in srgb, var(--secondary) 5%, var(--container-background));
+}
+
+.skeleton-box {
+    background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
+    background-size: 200% 100%;
+    border-radius: 6px;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-box { animation: none; }
+}
+
 /* Toast Notification Component */
 .toast {
+    font-family: 'One UI Sans', sans-serif;
     position: fixed;
     bottom: 60px;
     left: 50%;
@@ -177,7 +200,10 @@ input:checked + .slider {
     opacity: 0;
     transition: opacity 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     pointer-events: none;
-    white-space: nowrap;
+    max-width: calc(100% - 40px);
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    text-align: center;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
     will-change: backdrop-filter;
     transform: translateX(-50%) translateZ(0);
@@ -229,19 +255,18 @@ html[data-theme="light"] .toast {
     flex-direction: column;
     flex: 1;
     text-align: left;
-    min-height: 180px;
 }
 
 .dialogue-sheet {
     width: 100%;
-    max-width: 560px;
-    min-height: 300px;
+    max-width: 420px;
+    font-family: 'One UI Sans', sans-serif;
     display: flex;
     flex-direction: column;
     background: var(--container-background);
     color: var(--primary);
-    border-radius: 34px;
-    padding: 30px 32px 22px;
+    border-radius: 28px;
+    padding: 24px 24px 16px;
     box-sizing: border-box;
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.15) inset,
@@ -275,7 +300,7 @@ html[data-theme="light"] .dialogue-btn-separator {
 
 .dialogue-title {
     margin: 0;
-    font-size: 27px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--primary);
     text-align: left;
@@ -283,9 +308,8 @@ html[data-theme="light"] .dialogue-btn-separator {
 }
 
 .dialogue-body {
-    margin: 28px 0 0;
-    max-width: 92%;
-    font-size: 18px;
+    margin: 16px 0 0;
+    font-size: 16px;
     font-weight: 500;
     color: var(--secondary);
     text-align: left;
@@ -343,8 +367,8 @@ html[data-theme="light"] .dialogue-body {
     justify-content: center;
     width: 100%;
     gap: 0;
-    height: 68px;
-    margin: 0 auto;
+    height: 48px;
+    margin: 24px auto 0;
 }
 
 .dialogue-btn {
@@ -358,7 +382,7 @@ html[data-theme="light"] .dialogue-body {
     background: transparent;
     color: var(--primary);
     font-family: 'One UI Sans', var(--body), sans-serif;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     border-radius: 24px;
@@ -397,7 +421,7 @@ html[data-theme="light"] .cancel-btn {
 
 .dialogue-btn-separator {
     width: 1.2px;
-    height: 38px;
+    height: 28px;
     background-color: color-mix(in srgb, var(--primary) 10%, transparent);
     border-radius: 2px;
     flex-shrink: 0;
@@ -418,25 +442,6 @@ html[data-theme="light"] .dialogue-btn-separator {
         padding: 14px;
     }
 
-    .dialogue-sheet {
-        min-height: 244px;
-        border-radius: 28px;
-        padding: 24px 24px 16px;
-    }
-
-    .dialogue-content {
-        min-height: 148px;
-    }
-
-    .dialogue-title {
-        font-size: 22px;
-    }
-
-    .dialogue-body {
-        margin-top: 22px;
-        font-size: 16px;
-    }
-
     .dialogue-app-row {
         min-height: 108px;
         gap: 16px;
@@ -451,13 +456,6 @@ html[data-theme="light"] .dialogue-btn-separator {
         font-size: 20px;
     }
 
-    .dialogue-buttons {
-        height: 58px;
-    }
-
-    .dialogue-btn {
-        font-size: 19px;
-    }
 }
 
 /* ============================================================
@@ -469,9 +467,12 @@ html[data-theme="light"] .dialogue-btn-separator {
 }
 
 .top-app-bar-hero {
+    /* Keep the expanded heading below the 120px desktop toolbar overlay,
+       even when a short viewport makes 25vh smaller than that overlay. */
+    --top-app-bar-expanded-min-height: 280px;
     position: relative;
     width: 100%;
-    min-height: 25vh;
+    min-height: max(25vh, var(--top-app-bar-expanded-min-height));
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -479,6 +480,12 @@ html[data-theme="light"] .dialogue-btn-separator {
     justify-content: center;
     text-align: center;
     pointer-events: none;
+}
+
+@media (max-width: 699px) {
+    .top-app-bar-hero {
+        --top-app-bar-expanded-min-height: 180px;
+    }
 }
 
 .top-app-bar-hero-title {

@@ -1,6 +1,7 @@
 import { uniqueHeadingId } from '../../lib/headings';
 import { safeContentHref } from '../../lib/contentUrls';
 import Image from 'next/image';
+import { BLOG_IMAGE_SIZES, LEADING_IMAGE_TEXT_LIMIT } from '../../lib/blogImages';
 import type React from 'react';
 import { getEmbedHtmlForKey, processContentWithEmbeds } from '../../lib/blogContentProcessing';
 import { getSanityImageUrl, type SanityImageSource } from '../../lib/sanity';
@@ -45,27 +46,30 @@ function renderChildren(block: PortableTextBlock) {
   return block.children?.map((span, index) => renderSpan(span, block.markDefs, index));
 }
 
-function PortableImage({ block }: { block: PortableTextBlock }) {
+function PortableImage({ block, leading }: { block: PortableTextBlock; leading: boolean }) {
   const image = block as SanityImageSource;
   const src = getSanityImageUrl(image);
   const dimensions = image?.asset?._ref?.match(/-(\d+)x(\d+)-[^-]+$/);
   // Unknown legacy asset dimensions: avoid inventing an aspect ratio.
   // eslint-disable-next-line @next/next/no-img-element
-  if (!dimensions) return src ? <figure><img src={src} alt={block.alt || block.caption || ''} loading="lazy" decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
+  if (!dimensions) return src ? <figure className="portable-image portable-image--intrinsic"><img src={src} alt={block.alt || block.caption || ''} loading={leading ? "eager" : "lazy"} fetchPriority={leading ? "high" : "auto"} decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
   const crop = image?.crop;
   const width = Math.max(1, Math.round(Number(dimensions[1]) * (1 - (crop?.left || 0) - (crop?.right || 0))));
   const height = Math.max(1, Math.round(Number(dimensions[2]) * (1 - (crop?.top || 0) - (crop?.bottom || 0))));
   if (!src) return null;
 
   return (
-    <figure className="portable-image">
+    <figure className="portable-image" style={{ '--blog-media-ratio': width / height } as React.CSSProperties}>
       <div className="portable-image-frame">
         <Image
           src={src}
+          data-full={src}
+          loading={leading ? "eager" : "lazy"}
+          fetchPriority={leading ? "high" : "auto"}
           alt={block.alt || block.caption || ''}
           width={width}
           height={height}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+          sizes={BLOG_IMAGE_SIZES}
           style={{ width: '100%', height: 'auto' }}
         />
       </div>
@@ -74,11 +78,11 @@ function PortableImage({ block }: { block: PortableTextBlock }) {
   );
 }
 
-function renderBlock(block: PortableTextBlock, index: number, heading?: { id: string; level: number }) {
+function renderBlock(block: PortableTextBlock, index: number, leading: boolean, heading?: { id: string; level: number }) {
   const key = block._key || index;
 
   if (block._type === 'image') {
-    return <PortableImage key={key} block={block} />;
+    return <PortableImage key={key} block={block} leading={leading} />;
   }
 
   if (block._type === 'blogButton' && block.label && block.href) {
@@ -91,7 +95,7 @@ function renderBlock(block: PortableTextBlock, index: number, heading?: { id: st
   }
 
   if (block._type === 'legacyHtml' && block.html) {
-    return <BlogContent key={key} content={processContentWithEmbeds(block.html)} />;
+    return <BlogContent key={key} content={processContentWithEmbeds(block.html, { prioritizeLeadingImage: leading })} />;
   }
 
   const children = renderChildren(block);
@@ -117,6 +121,10 @@ export default function PortableTextContent({ blocks }: PortableTextContentProps
   const shift = blocks.some(b => b.style === 'h1') ? 1 : 0;
   let previousHeading = 1;
   let index = 0;
+  const firstMediaIndex = blocks.findIndex(block => ['image', 'embed', 'legacyHtml'].includes(block._type));
+  const leadingImageIndex = firstMediaIndex >= 0 && ['image', 'legacyHtml'].includes(blocks[firstMediaIndex]._type)
+    && blocks.slice(0, firstMediaIndex).reduce((length, block) => length + (block.children || []).reduce((sum, span) => sum + (span.text || '').length, 0), 0) <= LEADING_IMAGE_TEXT_LIMIT
+    ? firstMediaIndex : -1;
   function list(level: number, type: 'bullet' | 'number'): React.ReactNode {
     const children: React.ReactNode[] = [];
     const start = index;
@@ -144,7 +152,7 @@ export default function PortableTextContent({ blocks }: PortableTextContentProps
       previousHeading = level;
       heading = { level, id: uniqueHeadingId(block.children?.map(s => s.text || '').join('') || 'section', ids) };
     }
-    renderedBlocks.push(renderBlock(block, index, heading));
+    renderedBlocks.push(renderBlock(block, index, index === leadingImageIndex, heading));
     index++;
   }
   return <div className="body-text portable-text">{renderedBlocks}</div>;

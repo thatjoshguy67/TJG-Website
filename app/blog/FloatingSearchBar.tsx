@@ -1,6 +1,7 @@
 'use client';
 
 import SearchShortcutChip from '../components/SearchShortcutChip';
+import './FloatingSearchBar.css';
 
 import { useState, useRef, useEffect } from 'react';
 import { useBlogSearch } from './BlogSearchWrapper';
@@ -11,6 +12,18 @@ interface FloatingSearchBarProps {
 
 export default function FloatingSearchBar({ categories }: FloatingSearchBarProps) {
   const { searchQuery, setSearchQuery, activeCategory, setActiveCategory } = useBlogSearch();
+  return <BlogSearchControl categories={categories} searchQuery={searchQuery} setSearchQuery={setSearchQuery} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />;
+}
+
+interface BlogSearchControlProps extends FloatingSearchBarProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  activeCategory: string | null;
+  setActiveCategory: (category: string | null) => void;
+  inline?: boolean;
+}
+
+export function BlogSearchControl({ categories, searchQuery, setSearchQuery, activeCategory, setActiveCategory, inline = false }: BlogSearchControlProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +76,7 @@ export default function FloatingSearchBar({ categories }: FloatingSearchBarProps
 
   return (
     <>
-      <div className="floating-search-anchor">
+      <div className={`floating-search-anchor${inline ? " floating-search-anchor--inline" : ""}`}>
         <div className="floating-search-positioner" ref={filterRef} onKeyDown={e => { if (e.key === 'Escape' && filterOpen) { setFilterOpen(false); inputRef.current?.focus(); } }}>
           <div
             className="floating-search-bar"

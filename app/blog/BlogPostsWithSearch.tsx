@@ -1,8 +1,6 @@
 'use client';
-import { stripHtmlAndDecode } from '../../lib/portableText';
+import { BlogContentCard } from '../components/ContentCards';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useBlogSearch } from './BlogSearchWrapper';
 
 interface BlogPostsWithSearchProps {
@@ -29,50 +27,12 @@ export default function BlogPostsWithSearch({ categoryMap }: BlogPostsWithSearch
           <div className="section">
             <div className="list-group">
               {filteredPosts.map((post) => {
-                const featuredImageUrl = post.featuredImageUrl;
                 const categories = post.categories
                   ?.map((catSlug: string) => categoryMap[catSlug] || catSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
                   .filter(Boolean) ?? [];
                 
                 return (
-                  <Link key={post.id} href={`/blog/${post.slug}`} className="list blog-index-card">
-                    <div className={`blog-card-container${featuredImageUrl ? ' blog-card-container--image' : ' blog-card-container--fallback'}`}>
-                      {featuredImageUrl && (
-                        <div className="blog-card-background" aria-hidden="true">
-                          <Image
-                            src={featuredImageUrl}
-                            alt=""
-                            fill
-                            sizes="(max-width: 699px) calc(100vw - 56px), (max-width: 1200px) calc((100vw - 220px) / 2), 520px"
-                            preload={initialImageIds.has(post.id)}
-                            style={{ objectFit: 'cover' }}
-                          />
-                        </div>
-                      )}
-                      <div className="blog-card-gradient" aria-hidden="true" />
-                      <div className="blog-card-text-content">
-                        <div className="body-text-blog-title" >{stripHtmlAndDecode(post.title.rendered)}</div>
-                        <div className="information-wrapper">
-                          <div className="information" >{stripHtmlAndDecode(post.excerpt.rendered)}</div>
-                          <div className="blog-card-meta">
-                            <div className="blog-card-pill">
-                              {new Date(post.date).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })}
-                            </div>
-                            
-                            {categories.length > 0 && (
-                              <div className="blog-card-pill blog-card-pill-muted">
-                                {categories.join(', ')}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  <BlogContentCard key={post.id} post={post} categories={categories} preload={initialImageIds.has(post.id)} />
                 );
               })}
             </div>

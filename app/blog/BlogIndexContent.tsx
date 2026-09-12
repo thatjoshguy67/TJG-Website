@@ -1,8 +1,7 @@
-import { fetchBlogPage, fetchBlogCategories,  type BlogCategory } from "../../lib/blog";
+import { fetchBlogPage, fetchBlogCategories } from "../../lib/blog";
 import { BlogSearchProvider } from "./BlogSearchWrapper";
 import BlogPostsWithSearch from "./BlogPostsWithSearch";
 import FloatingSearchBar from "./FloatingSearchBar";
-import BlogDynamicHeader from "./BlogDynamicHeader";
 
 export default async function BlogIndexContent() {
   const [categories, result] = await Promise.all([fetchBlogCategories(), fetchBlogPage()]);
@@ -23,11 +22,7 @@ export default async function BlogIndexContent() {
     <BlogSearchProvider
       initialPage={result}
     >
-      <div className="main-content">
-        <BlogDynamicHeader />
-
-        <BlogPostsWithSearch categoryMap={categoryMapObj} />
-      </div>
+      <BlogPostsWithSearch categoryMap={categoryMapObj} />
 
       <FloatingSearchBar categories={sortedCategories} />
     </BlogSearchProvider>

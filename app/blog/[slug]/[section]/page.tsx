@@ -80,7 +80,7 @@ async function SectionBody({ slug, section }: { slug: string; section: string })
         collapseTarget=".post-hero-card"
         actions={
           <>
-            <PostActions slug={slug} />
+            <PostActions slug={slug} postId={content.id} />
           </>
         }
       />

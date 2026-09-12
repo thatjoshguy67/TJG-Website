@@ -3,17 +3,20 @@ import { build } from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
 let fixture: string;
+let fixtureStyles: string;
 test.beforeAll(async () => {
- const result = await build({ entryPoints: ['tests/browser/fixtures/controls.tsx'], bundle: true, write: false, jsx: 'automatic', platform: 'browser',
+ const result = await build({ entryPoints: ['tests/browser/fixtures/controls.tsx'], bundle: true, write: false, outdir: 'browser-fixture', jsx: 'automatic', platform: 'browser',
    define: { 'process.env.NODE_ENV': '"production"' },
    alias: Object.fromEntries(['navigation', 'image', 'dynamic', 'link'].map(name => [`next/${name}`, path.resolve(`tests/browser/fixtures/${name}.${name === 'navigation' ? 'ts' : 'tsx'}`)])),
  });
- fixture = result.outputFiles[0].text;
+ fixture = result.outputFiles.find(file => file.path.endsWith('.js'))!.text;
+ fixtureStyles = result.outputFiles.find(file => file.path.endsWith('.css'))?.text ?? '';
 });
 async function controls(page: Page) {
  await page.route('**/__audit_fixture', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><html lang="en" data-theme="light" data-accent="blue"><head><title>Controls test</title></head><body><div id="fixture"></div></body></html>' }));
  await page.goto('/__audit_fixture');
  for (const file of ['app/styles/shared.css','app/styles/ui-components.css','app/blog/blog.css']) await page.addStyleTag({ content: fs.readFileSync(file, 'utf8') });
+ if (fixtureStyles) await page.addStyleTag({ content: fixtureStyles });
  await page.addScriptTag({ content: fixture });
  await expect(page.getByRole('button', { name: 'Expand image: Landscape preview' })).toBeVisible();
 }
@@ -40,6 +43,25 @@ test('interactive images have compatible accessible names and roles', async ({pa
    return (await engine.run(document, { runOnly: ['presentation-role-conflict', 'image-alt', 'button-name'] })).violations;
  });
  expect(violations).toEqual([]);
+});
+test('developer Edit links use the document ID from the loaded post', async ({ page, context, baseURL }) => {
+ await context.addCookies([{ name: 'ff-blog-enabled', value: 'true', url: baseURL! }]);
+ const response = await page.request.get('/api/blog/posts?q=One%20UI%20Design%20Kit');
+ expect(response.ok()).toBe(true);
+ const { posts }: { posts: Array<{ id: string; slug: string }> } = await response.json();
+ const post = posts.find(post => post.slug === 'oneui-design-kit');
+ expect(post).toBeDefined();
+ expect(post!.id).not.toBe(post!.slug);
+
+ await page.goto(`/blog/${post!.slug}`);
+ await page.getByRole('button', { name: 'More post options' }).click();
+ const edit = page.getByRole('menuitem', { name: 'Edit', exact: true });
+ await expect(edit).toHaveCount(0);
+ await page.evaluate(() => {
+   localStorage.setItem('developer-options-enabled', 'true');
+   window.dispatchEvent(new Event('developer-options-changed'));
+ });
+ await expect(edit).toHaveAttribute('href', `https://admin.tjg.gg/content/posts/${encodeURIComponent(post!.id)}`);
 });
 test('comparison responds to arrow keys and exposes its value', async ({page}) => {
  await controls(page); const range = page.getByRole('slider', { name: 'Image comparison position' });

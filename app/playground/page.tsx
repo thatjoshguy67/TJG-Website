@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AnimatedText from "../components/AnimatedText";
 import { LoadingDots } from "../components/LoadingAnim";
@@ -10,13 +10,17 @@ import NativeSlideshow from "../blog/NativeSlideshow";
 import { useTheme, ACCENT_COLORS, ACCENT_DARK_BACKGROUNDS, ACCENT_LIGHT_BACKGROUNDS, ACCENT_DARK_CONTAINER_BACKGROUNDS, ACCENT_LIGHT_CONTAINER_BACKGROUNDS, type AccentColor } from "../components/ThemeProvider";
 import TopAppBar from "../components/TopAppBar";
 import Switch from "../components/Switch";
+import ColorSwatch from "./ColorSwatch";
+import { ContentCardsDemo, MenusDemo, PopoverDemo, SkeletonDemo } from "./AdditionalDemos";
+import { BlogSearchControl } from "../blog/FloatingSearchBar";
+import { NotificationOutline, MessageOutline } from '@thatjoshguy/oneui-icons';
 
 /* ------------------------------------------------------------------ */
 /*  Section wrapper – keeps each demo visually grouped                */
 /* ------------------------------------------------------------------ */
-function Section({ title, description, bare, children }: { title: string; description?: string; bare?: boolean; children: React.ReactNode }) {
+function Section({ title, description, bare, split, children }: { title: string; description?: string; bare?: boolean; split?: boolean; children: React.ReactNode }) {
   return (
-    <>
+    <div className={`playground-section${split ? ' playground-section--split' : ''}`}>
       <div className="section-header">
         <h2 className="title" style={{ fontSize: 'var(--subheading-size)' }}>{title}</h2>
         {description && (
@@ -30,7 +34,7 @@ function Section({ title, description, bare, children }: { title: string; descri
           {children}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -81,7 +85,8 @@ function DemoChips() {
         WebkitOverflowScrolling: "touch",
         scrollbarWidth: "none",
         width: "100%",
-        padding: "4px 0",
+        padding: "4px",
+        boxSizing: "border-box",
       }}
     >
       {chips.map((chip) => {
@@ -90,25 +95,8 @@ function DemoChips() {
           <button
             key={chip}
             onClick={() => setSelected(chip === "All" ? null : chip)}
-            style={{
-              flex: "0 0 auto",
-              borderRadius: "var(--br-2lg)",
-              padding: "8px 16px",
-              border: isSelected
-                ? "2px solid var(--accent)"
-                : "1px solid color-mix(in srgb, var(--secondary) 40%, transparent)",
-              backgroundColor: isSelected
-                ? "var(--accent)"
-                : "color-mix(in srgb, var(--container-background) 50%, transparent)",
-              color: isSelected ? "var(--on-accent)" : "var(--secondary)",
-              fontSize: 16,
-              fontFamily: "One UI Sans",
-              fontWeight: 500,
-              lineHeight: "20px",
-              whiteSpace: "nowrap",
-              cursor: "pointer",
-              transition: "background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease",
-            }}
+            className="playground-chip"
+            aria-pressed={isSelected}
           >
             {chip}
           </button>
@@ -122,72 +110,11 @@ function DemoChips() {
 /*  Button showcase                                                    */
 /* ------------------------------------------------------------------ */
 function DemoButtons() {
-  const [pressedIdx, setPressedIdx] = useState<number | null>(null);
-
   return (
-    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-      {/* Primary / accent button */}
-      <button
-        onMouseDown={() => setPressedIdx(0)}
-        onMouseUp={() => setPressedIdx(null)}
-        onMouseLeave={() => setPressedIdx(null)}
-        style={{
-          padding: "10px 24px",
-          borderRadius: "var(--br-9xl)",
-          border: "none",
-          backgroundColor: "var(--accent)",
-          color: "var(--on-accent)",
-          fontSize: "var(--body-size)",
-          fontFamily: "One UI Sans",
-          fontWeight: 600,
-          cursor: "pointer",
-          transform: pressedIdx === 0 ? "scale(0.96)" : "scale(1)",
-          transition: "transform 0.15s ease",
-        }}
-      >
-        Primary
-      </button>
-
-      {/* Secondary / outlined button */}
-      <button
-        onMouseDown={() => setPressedIdx(1)}
-        onMouseUp={() => setPressedIdx(null)}
-        onMouseLeave={() => setPressedIdx(null)}
-        style={{
-          padding: "10px 24px",
-          borderRadius: "var(--br-9xl)",
-          border: "1px solid color-mix(in srgb, var(--secondary) 40%, transparent)",
-          backgroundColor: "transparent",
-          color: "var(--primary)",
-          fontSize: "var(--body-size)",
-          fontFamily: "One UI Sans",
-          fontWeight: 500,
-          cursor: "pointer",
-          transform: pressedIdx === 1 ? "scale(0.96)" : "scale(1)",
-          transition: "transform 0.15s ease",
-        }}
-      >
-        Secondary
-      </button>
-
-      {/* Disabled button */}
-      <button
-        disabled
-        style={{
-          padding: "10px 24px",
-          borderRadius: "var(--br-9xl)",
-          border: "none",
-          backgroundColor: "var(--container-background)",
-          color: "var(--secondary)",
-          fontSize: "var(--body-size)",
-          fontFamily: "One UI Sans",
-          fontWeight: 500,
-          cursor: "not-allowed",
-          opacity: 0.5,
-        }}
-      >
-        Disabled
-      </button>
+    <div className="playground-demo-centered" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <button className="blog-button">Primary</button>
+      <button className="blog-button blog-button--secondary">Secondary</button>
+      <button className="blog-button" disabled>Disabled</button>
     </div>
   );
 }
@@ -204,49 +131,19 @@ function DemoRadioGroup() {
   ];
 
   return (
-    <div style={{ display: "flex", gap: 16 }}>
-      {options.map((opt) => (
-        <div
-          key={opt.value}
-          onClick={() => setValue(opt.value)}
-          role="radio"
-          aria-checked={value === opt.value}
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setValue(opt.value)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            cursor: "pointer",
-            fontFamily: "One UI Sans",
-            fontSize: "var(--body-size)",
-            color: "var(--primary)",
-          }}
-        >
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              border: value === opt.value ? "2px solid var(--accent)" : "2px solid var(--secondary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "border-color 0.2s ease",
-            }}
-          >
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                backgroundColor: value === opt.value ? "var(--accent)" : "transparent",
-                transition: "background-color 0.2s ease",
-              }}
-            />
-          </div>
-          {opt.label}
-        </div>
+    <div className="list-group" role="radiogroup" aria-label="Example options">
+      {options.map(opt => (
+        <label key={opt.value} className="list playground-radio-row">
+          <input
+            type="radio"
+            name="playground-example-option"
+            value={opt.value}
+            checked={value === opt.value}
+            onChange={() => setValue(opt.value)}
+            className="playground-radio"
+          />
+          <span className="list-item-content body-text">{opt.label}</span>
+        </label>
       ))}
     </div>
   );
@@ -257,333 +154,17 @@ function DemoRadioGroup() {
 /* ------------------------------------------------------------------ */
 function DemoSearchInput() {
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        backgroundColor: "var(--background)",
-        borderRadius: 999,
-        padding: "12px 20px",
-        boxSizing: "border-box",
-      }}
-    >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        style={{ flexShrink: 0, color: "var(--secondary)" }}
-      >
-        <path
-          d="M10.4131 3.4541C14.2501 3.4541 17.3711 6.57421 17.3711 10.4111C17.3711 12.0663 16.7893 13.5876 15.8213 14.7842L15.7275 14.9014L15.833 15.0068L20.375 19.5498C20.6025 19.7766 20.603 20.146 20.375 20.374V20.375C20.2618 20.4889 20.1126 20.5459 19.9629 20.5459C19.8134 20.5458 19.6649 20.4887 19.5518 20.375L15.0078 15.8311L14.9014 15.7256L14.7852 15.8193C13.5895 16.7874 12.0673 17.3701 10.4131 17.3701C6.57617 17.3701 3.45509 14.2481 3.45508 10.4111C3.45508 6.57421 6.5761 3.4541 10.4131 3.4541ZM10.4131 4.62012C7.21908 4.62012 4.62109 7.21705 4.62109 10.4111C4.62111 13.6051 7.21901 16.2041 10.4131 16.2041C13.6072 16.2041 16.2051 13.6051 16.2051 10.4111C16.2051 7.21705 13.6071 4.62012 10.4131 4.62012Z"
-          fill="currentColor"
-          stroke="currentColor"
-          strokeWidth="0.333333"
-        />
-      </svg>
-      <input
-        type="text"
-        placeholder="Search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        style={{
-          flex: 1,
-          minWidth: 0,
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          color: "var(--primary)",
-          fontSize: "1rem",
-          fontFamily: "One UI Sans",
-          fontWeight: 400,
-          padding: "2px 0",
-          margin: 0,
-        }}
-      />
-      {query && (
-        <button
-          onClick={() => setQuery("")}
-          style={{
-            background: "color-mix(in srgb, var(--secondary) 20%, transparent)",
-            border: "none",
-            borderRadius: "50%",
-            width: 26,
-            height: 26,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            padding: 0,
-            color: "var(--primary)",
-            opacity: 0.7,
-            flexShrink: 0,
-            transition: "opacity 0.15s ease",
-          }}
-          aria-label="Clear search"
-        >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1L9 9M9 1L1 9" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Progress bar demo                                                  */
-/* ------------------------------------------------------------------ */
-function DemoProgressBar() {
-  const [progress, setProgress] = useState(65);
-
-  return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          width: "100%",
-          height: 8,
-          borderRadius: 999,
-          backgroundColor: "color-mix(in srgb, var(--secondary) 20%, transparent)",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${progress}%`,
-            height: "100%",
-            borderRadius: 999,
-            backgroundColor: "var(--accent)",
-            transition: "width 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
-          }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          onClick={() => setProgress((p) => Math.max(0, p - 15))}
-          style={{
-            padding: "6px 14px",
-            borderRadius: "var(--br-sm)",
-            border: "1px solid color-mix(in srgb, var(--secondary) 30%, transparent)",
-            backgroundColor: "transparent",
-            color: "var(--primary)",
-            fontSize: 13,
-            fontFamily: "One UI Sans",
-            cursor: "pointer",
-          }}
-        >
-          - 15%
-        </button>
-        <button
-          onClick={() => setProgress((p) => Math.min(100, p + 15))}
-          style={{
-            padding: "6px 14px",
-            borderRadius: "var(--br-sm)",
-            border: "1px solid color-mix(in srgb, var(--secondary) 30%, transparent)",
-            backgroundColor: "transparent",
-            color: "var(--primary)",
-            fontSize: 13,
-            fontFamily: "One UI Sans",
-            cursor: "pointer",
-          }}
-        >
-          + 15%
-        </button>
-        <span style={{ color: "var(--secondary)", fontSize: 13, fontFamily: "One UI Sans", alignSelf: "center", marginLeft: "auto" }}>
-          {progress}%
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Container / card showcase                                          */
-/* ------------------------------------------------------------------ */
-function DemoCards() {
-  return (
-    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", width: "100%" }}>
-      {["Design", "Develop", "Ship"].map((label, i) => (
-        <div
-          key={label}
-          style={{
-            flex: "1 1 100px",
-            minWidth: 100,
-            padding: "20px 16px",
-            borderRadius: "var(--br-lg)",
-            backgroundColor: "var(--background)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 8,
-            transition: "transform 0.2s ease",
-            cursor: "default",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "var(--br-sm)",
-              backgroundColor: "var(--accent)",
-              opacity: 0.15 + i * 0.15,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          />
-          <span style={{ fontFamily: "One UI Sans", fontWeight: 600, fontSize: "var(--body-size)", color: "var(--primary)" }}>
-            {label}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Volume icon for slider demos                                       */
-/* ------------------------------------------------------------------ */
-function VolumeIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M3 9.5V14.5H6.5L11.5 19V5L6.5 9.5H3Z" fill="var(--accent)" />
-      <path d="M15.5 8.5C16.7 10.2 16.7 13.8 15.5 15.5" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M18.5 6C20.5 9 20.5 15 18.5 18" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Slider                                                             */
-/* ------------------------------------------------------------------ */
-function SliderInput({ value, onChange, min = 0, max = 100 }: {
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-  max?: number;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  const getValueFromX = useCallback((clientX: number) => {
-    const track = trackRef.current;
-    if (!track) return min;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.round(min + ratio * (max - min));
-  }, [min, max]);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    onChange(getValueFromX(e.clientX));
-  }, [onChange, getValueFromX]);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.buttons === 0) return;
-    onChange(getValueFromX(e.clientX));
-  }, [onChange, getValueFromX]);
-
-  const percent = ((value - min) / (max - min)) * 100;
-
-  return (
-    <div className="slider-container">
-      <VolumeIcon />
-      <div
-        ref={trackRef}
-        className="slider-track"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-      >
-        <div className="slider-fill" style={{ width: `${percent}%` }} />
-        <div className="slider-thumb" style={{ left: `${percent}%` }} />
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Segmented slider                                                   */
-/* ------------------------------------------------------------------ */
-function SegmentedSliderInput({ value, onChange, stops }: {
-  value: number;
-  onChange: (v: number) => void;
-  stops: number;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const max = stops - 1;
-
-  const getStopFromX = useCallback((clientX: number) => {
-    const track = trackRef.current;
-    if (!track) return 0;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.round(ratio * max);
-  }, [max]);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    onChange(getStopFromX(e.clientX));
-  }, [onChange, getStopFromX]);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.buttons === 0) return;
-    onChange(getStopFromX(e.clientX));
-  }, [onChange, getStopFromX]);
-
-  const percent = (value / max) * 100;
-
-  return (
-    <div className="slider-container">
-      <VolumeIcon />
-      <div
-        ref={trackRef}
-        className="slider-track"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-      >
-        {Array.from({ length: stops }, (_, i) => (
-          <div key={i} className="slider-stop" style={{ left: `${(i / max) * 100}%` }} />
-        ))}
-        <div className="slider-thumb slider-thumb--segmented" style={{ left: `${percent}%` }} />
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Slider demos                                                       */
-/* ------------------------------------------------------------------ */
-function DemoSliders() {
-  const [slider1, setSlider1] = useState(75);
-  const [slider2, setSlider2] = useState(40);
-  const [seg1, setSeg1] = useState(1);
-  const [seg2, setSeg2] = useState(3);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ fontFamily: "One UI Sans", fontWeight: 600, fontSize: "var(--body-size)", color: "var(--primary)" }}>
-          Standard
-        </div>
-        <SliderInput value={slider1} onChange={setSlider1} />
-        <SliderInput value={slider2} onChange={setSlider2} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ fontFamily: "One UI Sans", fontWeight: 600, fontSize: "var(--body-size)", color: "var(--primary)" }}>
-          Segmented
-        </div>
-        <SegmentedSliderInput value={seg1} onChange={setSeg1} stops={5} />
-        <SegmentedSliderInput value={seg2} onChange={setSeg2} stops={5} />
-      </div>
-    </div>
+    <BlogSearchControl
+      inline
+      categories={[]}
+      searchQuery={query}
+      setSearchQuery={setQuery}
+      activeCategory={category}
+      setActiveCategory={setCategory}
+    />
   );
 }
 
@@ -636,6 +217,9 @@ function DemoTypography() {
       <span style={{ fontFamily: "One UI Sans", fontWeight: 400, fontSize: "var(--font-size-2xs)", color: "var(--secondary)" }}>
         Caption (11px / 400) &mdash; Secondary information and metadata
       </span>
+      <code style={{ fontWeight: 400, fontSize: 'var(--body-size)', color: 'var(--primary)', overflowWrap: 'anywhere' }}>
+        Google Sans Code (14px / 400) &mdash; const accent = &quot;#387AFF&quot;;
+      </code>
     </div>
   );
 }
@@ -645,9 +229,10 @@ function DemoTypography() {
 /* ------------------------------------------------------------------ */
 function DemoBadges() {
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+    <div className="playground-demo-centered" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
       <span className="beta-chip">Beta</span>
       <span
+        className="playground-badge"
         style={{
           padding: "4px 12px",
           borderRadius: 999,
@@ -661,6 +246,7 @@ function DemoBadges() {
         New
       </span>
       <span
+        className="playground-badge"
         style={{
           padding: "4px 12px",
           borderRadius: 999,
@@ -674,6 +260,7 @@ function DemoBadges() {
         Info
       </span>
       <span
+        className="playground-badge"
         style={{
           padding: "4px 12px",
           borderRadius: 999,
@@ -687,6 +274,7 @@ function DemoBadges() {
         Success
       </span>
       <span
+        className="playground-badge"
         style={{
           padding: "4px 12px",
           borderRadius: 999,
@@ -700,6 +288,7 @@ function DemoBadges() {
         Error
       </span>
       <span
+        className="playground-badge"
         style={{
           padding: "4px 12px",
           borderRadius: 999,
@@ -778,212 +367,52 @@ function DemoListItems() {
 /*  Colour Palette Previewer                                           */
 /* ------------------------------------------------------------------ */
 function DemoColourPalette() {
-  const { theme, accentColor } = useTheme();
-
-  const resolvedTheme: 'light' | 'dark' =
-    theme === 'auto'
-      ? typeof document !== 'undefined'
-        ? ((document.documentElement.dataset.theme as 'light' | 'dark') ?? 'dark')
-        : 'dark'
-      : theme;
-
+  const { accentColor } = useTheme();
   const accentNames = Object.keys(ACCENT_COLORS) as AccentColor[];
-
-  const coreVars = [
-    { name: '--background', label: 'Background' },
-    { name: '--container-background', label: 'Container' },
-    { name: '--primary', label: 'Primary' },
-    { name: '--secondary', label: 'Secondary' },
-    { name: '--accent', label: 'Accent' },
-    { name: '--selected', label: 'Selected' },
+  const tokenGroup = (title: string, tokens: string[]) => ({
+    title,
+    swatches: tokens.map(token => ({ label: token.replace(/^--/, '').replaceAll('-', ' '), color: `var(${token})`, detail: token })),
+  });
+  const groups = [
+    tokenGroup('Current theme', [
+      '--background', '--container-background', '--foreground', '--primary', '--secondary',
+      '--selected', '--accent', '--on-accent', '--accent-control', '--accent-link',
+      '--divider', '--button-divider', '--press-highlight',
+      '--container-background-hover', '--container-background-active', '--navigation-hover', '--skeleton-base', '--skeleton-highlight',
+    ]),
+    ...(['light', 'dark'] as const).map(theme => tokenGroup(`${theme} theme base`, [
+      `--${theme}-primary`, `--${theme}-secondary`, `--${theme}-selected`,
+      `--${theme}-foreground`, `--${theme}-divider`, `--${theme}-button-divider`, `--${theme}-press-highlight`,
+    ])),
+    { title: 'Accent palette · decoration and dark-theme links', swatches: accentNames.map(name => ({
+      label: name, color: ACCENT_COLORS[name], detail: ACCENT_COLORS[name], active: name === accentColor,
+    })) },
+    { title: 'Accent controls · white labels', swatches: accentNames.map(name => ({
+      label: name, color: `var(--accent-control-${name})`, detail: `--accent-control-${name}`, active: name === accentColor,
+    })) },
+    { title: 'Light-theme links', swatches: accentNames.map(name => ({
+      label: name, color: `var(--accent-link-${name})`, detail: `--accent-link-${name}`, active: name === accentColor,
+    })) },
+    ...([
+      ['Light backgrounds', ACCENT_LIGHT_BACKGROUNDS],
+      ['Light containers', ACCENT_LIGHT_CONTAINER_BACKGROUNDS],
+      ['Dark backgrounds', ACCENT_DARK_BACKGROUNDS],
+      ['Dark containers', ACCENT_DARK_CONTAINER_BACKGROUNDS],
+    ] as const).map(([title, colors]) => ({
+      title, swatches: accentNames.map(name => ({ label: name, color: colors[name], detail: colors[name], active: name === accentColor })),
+    })),
   ];
-
-  const stateVars = [
-    { name: '--container-background-hover', label: 'Hover' },
-    { name: '--container-background-active', label: 'Active' },
-  ];
-
-  const skeletonVars = [
-    { name: '--skeleton-base', label: 'Base' },
-    { name: '--skeleton-highlight', label: 'Highlight' },
-  ];
-
-  const groupLabel: React.CSSProperties = {
-    fontFamily: 'One UI Sans',
-    fontWeight: 600,
-    fontSize: 'var(--body-size)',
-    color: 'var(--secondary)',
-    marginBottom: 10,
-  };
-
-  const swatchGrid: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))',
-    gap: 12,
-  };
-
-  function CssVarSwatch({ name, label }: { name: string; label: string }) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <div
-          style={{
-            height: 52,
-            borderRadius: 'var(--br-sm)',
-            backgroundColor: `var(${name})`,
-            border: '1px solid color-mix(in srgb, var(--secondary) 20%, transparent)',
-          }}
-        />
-        <span style={{ fontFamily: 'One UI Sans', fontSize: 11, fontWeight: 500, color: 'var(--primary)', lineHeight: 1.3 }}>
-          {label}
-        </span>
-        <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: 'var(--secondary)', lineHeight: 1.3 }}>
-          {name}
-        </span>
-      </div>
-    );
-  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
-      {/* Core theme colours */}
-      <div>
-        <div style={groupLabel}>Theme</div>
-        <div style={swatchGrid}>
-          {coreVars.map(({ name, label }) => (
-            <CssVarSwatch key={name} name={name} label={label} />
-          ))}
-        </div>
-      </div>
-
-      {/* Accent palette */}
-      <div>
-        <div style={groupLabel}>Accent Palette</div>
-        <div style={swatchGrid}>
-          {accentNames.map(name => {
-            const isActive = name === accentColor;
-            return (
-              <div key={name} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <div
-                  style={{
-                    height: 52,
-                    borderRadius: 'var(--br-sm)',
-                    backgroundColor: ACCENT_COLORS[name],
-                    border: isActive ? '2px solid var(--primary)' : '1px solid transparent',
-                    position: 'relative',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  {isActive && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 5,
-                        right: 5,
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(0,0,0,0.35)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                        <path d="M1 3L3 5L7 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'One UI Sans',
-                    fontSize: 11,
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? 'var(--primary)' : 'var(--secondary)',
-                    lineHeight: 1.3,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {name}
-                </span>
-                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: 'var(--secondary)', lineHeight: 1.3 }}>
-                  {ACCENT_COLORS[name]}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Accent-specific background palette */}
-      <div>
-        <div style={groupLabel}>
-          Accent Backgrounds&nbsp;
-          <span style={{ fontWeight: 400, textTransform: 'capitalize' }}>({resolvedTheme})</span>
-        </div>
-        <div style={swatchGrid}>
-          {accentNames.map(name => {
-            const bg = resolvedTheme === 'dark' ? ACCENT_DARK_BACKGROUNDS[name] : ACCENT_LIGHT_BACKGROUNDS[name];
-            const containerBg = resolvedTheme === 'dark' ? ACCENT_DARK_CONTAINER_BACKGROUNDS[name] : ACCENT_LIGHT_CONTAINER_BACKGROUNDS[name];
-            const isActive = name === accentColor;
-            return (
-              <div key={name} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <div
-                  style={{
-                    height: 52,
-                    borderRadius: 'var(--br-sm)',
-                    overflow: 'hidden',
-                    border: isActive
-                      ? '2px solid var(--accent)'
-                      : '1px solid color-mix(in srgb, var(--secondary) 20%, transparent)',
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <div style={{ flex: 1, backgroundColor: bg }} />
-                  <div style={{ height: 18, backgroundColor: containerBg }} />
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'One UI Sans',
-                    fontSize: 11,
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? 'var(--primary)' : 'var(--secondary)',
-                    lineHeight: 1.3,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {name}
-                </span>
-                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: 'var(--secondary)', lineHeight: 1.3 }}>
-                  {bg}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Interactive states */}
-      <div>
-        <div style={groupLabel}>Interactive States</div>
-        <div style={swatchGrid}>
-          {stateVars.map(({ name, label }) => (
-            <CssVarSwatch key={name} name={name} label={label} />
-          ))}
-        </div>
-      </div>
-
-      {/* Skeleton colours */}
-      <div>
-        <div style={groupLabel}>Skeleton</div>
-        <div style={swatchGrid}>
-          {skeletonVars.map(({ name, label }) => (
-            <CssVarSwatch key={name} name={name} label={label} />
-          ))}
-        </div>
-      </div>
+    <div className="palette-groups">
+      {groups.map(group => (
+        <section key={group.title} aria-label={group.title} className="panel palette-group-card">
+          <h3 className="palette-group-title">{group.title}</h3>
+          <div className="palette-grid">
+            {group.swatches.map(swatch => <ColorSwatch key={swatch.detail + swatch.label} {...swatch} />)}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -1007,9 +436,9 @@ function PlaygroundContent() {
   }, []);
 
   const demoSlides = [
-    { src: "https://picsum.photos/seed/playground1/800/500", alt: "Demo slide 1", caption: "First slide caption" },
-    { src: "https://picsum.photos/seed/playground2/800/500", alt: "Demo slide 2", caption: "Second slide caption" },
-    { src: "https://picsum.photos/seed/playground3/800/500", alt: "Demo slide 3", caption: "Third slide caption" },
+    { src: "/images/projects/oneui-bento.png", alt: "One UI design showcase", caption: "First slide caption" },
+    { src: "/images/projects/oneui-design-kit-cover-light.png", alt: "One UI design kit", caption: "Second slide caption" },
+    { src: "/images/projects/oneui-devmode.png", alt: "One UI developer mode", caption: "Third slide caption" },
   ];
 
   return (
@@ -1020,163 +449,138 @@ function PlaygroundContent() {
           backHref={from}
         />
 
-        {/* ---- Colour Palette ---- */}
-        <Section title="Colour Palette" description="All colour variables for the current theme and accent">
-          <DemoColourPalette />
-        </Section>
+        <div className="card-columns-layout playground-columns">
+          <div className="card-column">
+            {/* ---- Colour Palette ---- */}
+            <Section title="Colour Palette" description="Theme tokens and every accent, background, container, control and link variant" bare split>
+              <DemoColourPalette />
+            </Section>
 
-        {/* ---- Typography ---- */}
-        <Section title="Typography" description="Font scale used across the site">
-          <DemoTypography />
-        </Section>
+            {/* ---- Typography ---- */}
+            <Section title="Typography" description="Base typography tokens; individual components can override size and weight">
+              <DemoTypography />
+            </Section>
 
-        {/* ---- Animated Text ---- */}
-        <Section title="Animated Text" description="Hover or drag across the text to see font weight react to your cursor">
-          <AnimatedText
-            text="Interactive weight"
-            style={{ fontSize: "var(--title-size)", letterSpacing: "-0.5px" }}
-          />
-          <div style={{ marginTop: 8 }}>
-            <AnimatedText
-              text="Inverse mode"
-              inverse
-              style={{ fontSize: "var(--subtitle-size)", letterSpacing: "-0.3px" }}
-            />
+            {/* ---- Animated Text ---- */}
+            <Section title="Animated Text" description="Hover or drag across the text to see font weight react to your cursor">
+              <AnimatedText
+                text="Interactive weight"
+                style={{ fontSize: "var(--title-size)", letterSpacing: "-0.5px" }}
+              />
+              <div style={{ marginTop: 8 }}>
+                <AnimatedText
+                  text="Inverse mode"
+                  inverse
+                  style={{ fontSize: "var(--subtitle-size)", letterSpacing: "-0.3px" }}
+                />
+              </div>
+            </Section>
+
+            {/* ---- Toggle Switches ---- */}
+            <Section title="Toggle Switches" description="Standard on/off controls" bare>
+              <div className="list-group">
+                <ToggleRow id="demo-toggle-a" label="Notifications" description="Receive push notifications" checked={toggleA} onChange={setToggleA} />
+                <ToggleRow id="demo-toggle-b" label="Dark mode sync" description="Follow system appearance" checked={toggleB} onChange={setToggleB} />
+                <ToggleRow id="demo-toggle-c" label="Experimental" description="Enable beta features" checked={toggleC} onChange={setToggleC} badge="Beta" />
+              </div>
+            </Section>
+
+            {/* ---- Buttons ---- */}
+            <Section title="Buttons" description="Primary, secondary, and disabled states">
+              <DemoButtons />
+            </Section>
+
+            {/* ---- Badges ---- */}
+            <Section title="Badges" description="Status indicators and labels">
+              <DemoBadges />
+            </Section>
+
+            <Section title="Content Cards" description="Shop products, blog posts and home carousel variants" bare>
+              <ContentCardsDemo />
+            </Section>
+
+            {/* ---- Chips ---- */}
+            <Section title="Chips" description="Scrollable filter chips with selection state">
+              <DemoChips />
+            </Section>
           </div>
-        </Section>
+          <div className="card-column">
+            {/* ---- Radio Group ---- */}
+            <Section title="Radio Group" description="Single-selection radio buttons" bare>
+              <DemoRadioGroup />
+            </Section>
 
-        {/* ---- Toggle Switches ---- */}
-        <Section title="Toggle Switches" description="Standard on/off controls" bare>
-          <div className="list-group">
-            <ToggleRow id="demo-toggle-a" label="Notifications" description="Receive push notifications" checked={toggleA} onChange={setToggleA} />
-            <ToggleRow id="demo-toggle-b" label="Dark mode sync" description="Follow system appearance" checked={toggleB} onChange={setToggleB} />
-            <ToggleRow id="demo-toggle-c" label="Experimental" description="Enable beta features" checked={toggleC} onChange={setToggleC} badge="Beta" />
+            {/* ---- Search Input ---- */}
+            <Section title="Blog Search" description="The blog search control, including clear and category filter actions" bare>
+              <DemoSearchInput />
+            </Section>
+
+            {/* ---- List Items ---- */}
+            <Section title="List Items" description="Grouped rows with toggles, subtext, and navigation" bare>
+              <DemoListItems />
+            </Section>
+
+            <Section title="Popovers" description="Hover or focus the buttons to preview keyboard hints on desktop">
+              <PopoverDemo />
+            </Section>
+
+            <Section title="Expanding Menus" description="Selection and post-options menus; changes here stay in the preview">
+              <MenusDemo />
+            </Section>
+
+            {/* ---- Toast Notification ---- */}
+            <Section title="Toast Notification" description="Tap the button to show a toast">
+              <button
+                onClick={() => fireToast("This is a demo toast notification")}
+                className="blog-button playground-action-button"
+              >
+                <NotificationOutline size={20} color="currentColor" aria-hidden="true" />
+                Show Toast
+              </button>
+            </Section>
+
+            {/* ---- Dialog ---- */}
+            <Section title="Dialog" description="Confirmation prompt with cancel and apply actions">
+              <button
+                onClick={() => setShowDialog(true)}
+                className="blog-button playground-action-button"
+              >
+                <MessageOutline size={20} color="currentColor" aria-hidden="true" />
+                Show Dialog
+              </button>
+            </Section>
+
+            {/* ---- Loading Animation ---- */}
+            <Section title="Loading Animation" description="Samsung One UI four-dot spinner in different sizes">
+              <div className="playground-demo-centered" style={{ display: "flex", gap: 32, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ textAlign: "center" }}>
+                  <LoadingDots size={32} />
+                  <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Small</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <LoadingDots />
+                  <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Default</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <LoadingDots size={80} />
+                  <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Large</div>
+                </div>
+              </div>
+            </Section>
+
+            <Section title="Skeleton Placeholders" description="Image and text placeholders used while articles load">
+              <SkeletonDemo />
+            </Section>
+
+            {/* ---- Slideshow ---- */}
+            <Section title="Slideshow" description="Drag or use arrows to navigate between slides">
+              <div style={{ width: "100%" }}>
+                <NativeSlideshow slides={demoSlides} />
+              </div>
+            </Section>
+
           </div>
-        </Section>
-
-        {/* ---- Buttons ---- */}
-        <Section title="Buttons" description="Primary, secondary, and disabled states">
-          <DemoButtons />
-        </Section>
-
-        {/* ---- Badges ---- */}
-        <Section title="Badges" description="Status indicators and labels">
-          <DemoBadges />
-        </Section>
-
-        {/* ---- Chips ---- */}
-        <Section title="Chips" description="Scrollable filter chips with selection state">
-          <DemoChips />
-        </Section>
-
-        {/* ---- Radio Group ---- */}
-        <Section title="Radio Group" description="Single-selection radio buttons">
-          <DemoRadioGroup />
-        </Section>
-
-        {/* ---- Search Input ---- */}
-        <Section title="Search Input" description="Text input with clear button">
-          <DemoSearchInput />
-        </Section>
-
-        {/* ---- Progress Bar ---- */}
-        <Section title="Progress Bar" description="Animated progress indicator">
-          <DemoProgressBar />
-        </Section>
-
-        {/* ---- Sliders ---- */}
-        <Section title="Sliders" description="Standard and segmented range inputs">
-          <DemoSliders />
-        </Section>
-
-        {/* ---- Cards ---- */}
-        <Section title="Cards" description="Hoverable card page-body">
-          <DemoCards />
-        </Section>
-
-        {/* ---- List Items ---- */}
-        <Section title="List Items" description="Grouped rows with toggles, subtext, and navigation" bare>
-          <DemoListItems />
-        </Section>
-
-        {/* ---- Toast Notification ---- */}
-        <Section title="Toast Notification" description="Tap the button to show a toast">
-          <button
-            onClick={() => fireToast("This is a demo toast notification")}
-            style={{
-              padding: "10px 24px",
-              borderRadius: "var(--br-9xl)",
-              border: "none",
-              backgroundColor: "var(--accent)",
-              color: "var(--on-accent)",
-              fontSize: "var(--body-size)",
-              fontFamily: "One UI Sans",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Show Toast
-          </button>
-        </Section>
-
-        {/* ---- Dialog ---- */}
-        <Section title="Dialog" description="Confirmation prompt with cancel and apply actions">
-          <button
-            onClick={() => setShowDialog(true)}
-            style={{
-              padding: "10px 24px",
-              borderRadius: "var(--br-9xl)",
-              border: "none",
-              backgroundColor: "var(--accent)",
-              color: "var(--on-accent)",
-              fontSize: "var(--body-size)",
-              fontFamily: "One UI Sans",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Show Dialog
-          </button>
-        </Section>
-
-        {/* ---- Loading Animation ---- */}
-        <Section title="Loading Animation" description="Samsung One UI four-dot spinner in different sizes">
-          <div style={{ display: "flex", gap: 32, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ textAlign: "center" }}>
-              <LoadingDots size={32} />
-              <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Small</div>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <LoadingDots />
-              <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Default</div>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <LoadingDots size={80} />
-              <div style={{ color: "var(--secondary)", fontSize: 12, fontFamily: "One UI Sans", marginTop: 8 }}>Large</div>
-            </div>
-          </div>
-        </Section>
-
-        {/* ---- Loading Animation (full-width demo) ---- */}
-        <Section title="Loading State" description="Samsung One UI four-dot animation used as a page loading indicator">
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200, width: "100%" }}>
-            <LoadingDots />
-          </div>
-        </Section>
-
-        {/* ---- Slideshow ---- */}
-        <Section title="Slideshow" description="Drag or use arrows to navigate between slides">
-          <div style={{ width: "100%" }}>
-            <NativeSlideshow slides={demoSlides} />
-          </div>
-        </Section>
-
-        {/* ---- Progressive Blur ---- */}
-        <Section title="Progressive Blur" description="The blur overlays at the top and bottom of the viewport (visible when blur effects are enabled in settings)">
-          <div style={{ color: "var(--secondary)", fontSize: "var(--body-size)", fontFamily: "One UI Sans" }}>
-            The progressive blur is rendered at the page level. Scroll up to see the top blur overlay in action.
-          </div>
-        </Section>
+        </div>
 
         {/* Bottom spacing */}
         <div style={{ height: 60 }} />

@@ -208,8 +208,9 @@ a.skip-link:any-link:focus-visible {
   align-items: center;
   gap: 10px;
   padding: 14px 28px;
+  border: 0;
   border-radius: var(--br-9xl);
-  background-color: var(--accent-control);
+  background-color: var(--accent);
   color: var(--on-accent) !important;
   text-decoration: none;
   font-family: 'One UI Sans';
@@ -220,13 +221,25 @@ a.skip-link:any-link:focus-visible {
   cursor: pointer;
 }
 
-.blog-button:hover {
+.blog-button:hover:not(:disabled) {
   transform: scale(1.03);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.blog-button:active {
+.blog-button:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.blog-button--secondary {
+  background-color: transparent;
+  color: var(--primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--secondary) 40%, transparent);
+}
+
+.blog-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media screen and (max-width: 699px) {
@@ -592,12 +605,10 @@ html[data-theme="dark"] button.list:hover {
   margin-bottom: 0;
 }
 
-.list-group > .list:not(:last-child)::after,
-.list-group > a.list:not(:last-child)::after,
-.list-group > label.list:not(:last-child)::after {
+.list-group > .list + .list::before {
   content: '';
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 20px;
   right: 20px;
   height: 1px;
@@ -2104,6 +2115,13 @@ z-index: 1;
 background: transparent;
 }
 
+/* Keep keyboard focus inside the smoothed link's clip path. */
+.desktop-nav a.nav-icon-container:focus-visible,
+.desktop-nav a.nav-icon-container-selected:focus-visible {
+outline: 2px solid var(--accent-control);
+outline-offset: -4px;
+}
+
 .desktop-nav-indicator {
 position: absolute;
 top: 0;
@@ -2161,6 +2179,16 @@ box-sizing: border-box;
 html[data-theme="dark"] .desktop-nav .nav-footer .nav-icon-container-selected {
 background: #2e2e30;
 border-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-nav .icon-container > a:hover,
+.desktop-nav .nav-footer > a.nav-icon-container:hover,
+.desktop-nav .nav-footer > a.nav-icon-container-selected:hover {
+background-color: var(--navigation-hover);
+}
+
+.desktop-nav .icon-container a[data-hover-suppressed="true"] {
+background-color: transparent;
 }
 
 .desktop-nav-indicator[data-direction="1"] .desktop-nav-indicator-pill {
@@ -2385,8 +2413,31 @@ mask-image: linear-gradient(to bottom, black 0%, transparent 100%) !important;
 -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%) !important;
 }
 
-.settings-page .main-content {
-padding-top: 80px !important;
+.settings-layout,
+.card-columns-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 560px);
+  column-gap: 24px;
+  align-items: start;
+  justify-content: center;
+  align-self: center;
+  width: 100%;
+  max-width: 1144px;
+}
+
+/* Match the desktop navigation breakpoint. */
+@media (min-width: 700px) {
+  .settings-layout,
+  .card-columns-layout {
+    grid-template-columns: repeat(2, minmax(0, 560px));
+  }
+}
+
+.settings-column,
+.card-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 /* Remove excessive height and padding for settings page */
@@ -2420,8 +2471,8 @@ padding-top: 80px !important;
   border-bottom-left-radius: var(--br-9xl);
 }
 
-.settings-page .list:focus-visible::after,
-.settings-page .list:has(:focus-visible)::after {
+.settings-page .list:focus-visible::before,
+.settings-page .list:has(:focus-visible)::before {
   opacity: 0;
 }
 
@@ -2433,7 +2484,7 @@ padding-top: 80px !important;
 @media screen and (max-width: 699px) {
   .settings-page .main-content {
     width: 100% !important;
-    padding: 80px 20px 0 !important;
+    padding: 28px 20px 0 !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
     overflow-x: visible !important;
@@ -2660,6 +2711,12 @@ justify-content: flex-start;
   }
 }
 
+.search-shortcut-anchor {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
 .keyboard-shortcut-chip {
   display: inline-flex;
   align-items: center;
@@ -2718,6 +2775,12 @@ justify-content: flex-start;
 .shortcut-popover-row + .shortcut-popover-row { margin-top: 8px; }
 .shortcut-popover .keyboard-shortcut-chip { display: inline-flex; }
 @keyframes shortcut-popover-in { from { opacity: 0; } to { opacity: 1; } }
+.shortcut-popover--closing {
+  opacity: 0;
+  pointer-events: none;
+  animation: shortcut-popover-out 140ms ease-out forwards;
+}
+@keyframes shortcut-popover-out { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .shortcut-popover { animation: none; } }
 
 .top-app-bar-title-text { display: inline-block; padding-inline: 6px; }

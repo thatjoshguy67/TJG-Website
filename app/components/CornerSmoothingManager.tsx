@@ -15,6 +15,22 @@ const targetIds = new WeakMap<HTMLElement, number>();
 const inlineRadiusSignatures = new WeakMap<HTMLElement, string>();
 let nextTargetId = 1;
 
+const CHIP_AND_BADGE_SELECTOR = [
+  '.playground-chip', '.palette-hex-chip', '.beta-chip', '.badge',
+  '.playground-badge', '.keyboard-shortcut-chip', '.post-hero-chip',
+  '.floating-search-filter-chip', '.post-search-match-badge',
+  '.shop-product-pill', '.blog-card-pill', '.design-project-tag',
+].join(', ');
+
+const ADDITIONAL_SURFACE_SELECTOR = [
+  '.shop-product-card', '.blog-card-container', '.design-project-card',
+  '.native-slideshow__slide', '.native-slideshow__img', '.native-slideshow__caption',
+  '.post-search-bar', '.post-search-clear', '.post-search-jump',
+  '.post-search-results', '.post-search-results button',
+  '.floating-search-clear', '.floating-search-filter-btn',
+  '.floating-search-filter-menu', '.floating-search-filter-item',
+].join(', ');
+
 function inlineRadiusSignature(element: HTMLElement): string {
   return [
     element.style.borderRadius,
@@ -97,7 +113,9 @@ function sameTargets(previous: SmoothTarget[], next: SmoothTarget[]): boolean {
 function SmoothCornerTarget({ target }: { target: SmoothTarget }) {
   const ref = useMemo(() => ({ current: target.element }), [target.element]);
 
-  useSmoothCorners(ref, target.corners, { autoEffects: false });
+  useSmoothCorners(ref, target.corners, {
+    autoEffects: target.element.matches(CHIP_AND_BADGE_SELECTOR),
+  });
 
   return null;
 }
@@ -113,7 +131,7 @@ export function CornerSmoothingManager({ enabled }: { enabled: boolean }) {
 
     let frame = 0;
     // Only components that opt in (or established rounded surfaces) are measured.
-    const selector = '[data-smooth-corners], .panel, .list, .floating-search-bar, .settings-group, .nav-link, .blog-button, .profile-image';
+    const selector = `[data-smooth-corners], .panel, .list, .floating-search-bar, .settings-group, .nav-link, .blog-button, .profile-image, ${CHIP_AND_BADGE_SELECTOR}, ${ADDITIONAL_SURFACE_SELECTOR}`;
     const known = new Map<HTMLElement, SmoothTarget>();
     const pending = new Set<HTMLElement>();
     const enqueue = (root: Element) => {

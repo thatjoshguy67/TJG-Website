@@ -57,10 +57,10 @@ html[data-theme="dark"] {
     --primary: var(--dark-primary);
     --accent: var(--accent);
     --selected: var(--dark-selected);
-    --foreground: #2E2E30;
-    --divider: #2E2E30;
-    --button-divider: #2E2E30;
-    --press-highlight: rgba(255, 255, 255, 0.18);
+    --foreground: var(--dark-foreground);
+    --divider: var(--dark-divider);
+    --button-divider: var(--dark-button-divider);
+    --press-highlight: var(--dark-press-highlight);
 }
 
 html[data-theme="light"] {
@@ -70,10 +70,10 @@ html[data-theme="light"] {
     --primary: var(--light-primary);
     --accent: var(--accent);
     --selected: var(--light-selected);
-    --foreground: #FCFCFF;
-    --divider: #E8E8EA;
-    --button-divider: #E8E8EA;
-    --press-highlight: rgba(0, 0, 0, 0.12);
+    --foreground: var(--light-foreground);
+    --divider: var(--light-divider);
+    --button-divider: var(--light-button-divider);
+    --press-highlight: var(--light-press-highlight);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -84,10 +84,10 @@ html[data-theme="light"] {
         --primary: var(--dark-primary);
         --accent: var(--accent);
         --selected: var(--dark-selected);
-        --foreground: #2E2E30;
-        --divider: #2E2E30;
-        --button-divider: #2E2E30;
-        --press-highlight: rgba(255, 255, 255, 0.18);
+        --foreground: var(--dark-foreground);
+        --divider: var(--dark-divider);
+        --button-divider: var(--dark-button-divider);
+        --press-highlight: var(--dark-press-highlight);
     }
 }
 
@@ -99,10 +99,10 @@ html[data-theme="light"] {
         --primary: var(--light-primary);
         --accent: var(--accent);
         --selected: var(--light-selected);
-        --foreground: #FCFCFF;
-        --divider: #E8E8EA;
-        --button-divider: #E8E8EA;
-        --press-highlight: rgba(0, 0, 0, 0.12);
+        --foreground: var(--light-foreground);
+        --divider: var(--light-divider);
+        --button-divider: var(--light-button-divider);
+        --press-highlight: var(--light-press-highlight);
     }
 }
 
@@ -141,6 +141,10 @@ a:not(:any-link) {
     color: var(--primary);
 }
 
+code, pre, kbd, samp, tt {
+    font-family: var(--font-mono), monospace;
+}
+
 :root {
     --body: 'One UI Sans APP VF';
     --font-size-2xs: 11px;
@@ -148,6 +152,14 @@ a:not(:any-link) {
     --subheading-size: 18px;
     --subtitle-size: 20px;
     --title-size: 40px;
+    --dark-foreground: #2E2E30;
+    --dark-divider: #2E2E30;
+    --dark-button-divider: #2E2E30;
+    --dark-press-highlight: rgba(255, 255, 255, 0.18);
+    --light-foreground: #FCFCFF;
+    --light-divider: #E8E8EA;
+    --light-button-divider: #E8E8EA;
+    --light-press-highlight: rgba(0, 0, 0, 0.12);
     --dark-background: #000;
     --dark-secondary: #848487;
     --dark-container-background: #17171a;
@@ -160,6 +172,7 @@ a:not(:any-link) {
     --light-selected: #EFEFEF;
     --accent: #387aff;
     --on-accent: #fff;
+    --navigation-hover: color-mix(in srgb, var(--background) 92%, var(--primary) 8%);
     --gap-xl: 10px;
     --gap-xll: 20px;
     --gap-11xs: 2px;
@@ -174,12 +187,12 @@ a:not(:any-link) {
     --br-9xl: 28px;
     --br-10xl: 40px;
     --br-11xs: 2px;
-    --foreground: #FCFCFF;
-    --divider: #E8E8EA;
-    --button-divider: #E8E8EA;
+    --foreground: var(--light-foreground);
+    --divider: var(--light-divider);
+    --button-divider: var(--light-button-divider);
     --card-radius: 28px;
     --inner-radius: 12px;
-    --press-highlight: rgba(0, 0, 0, 0.12);
+    --press-highlight: var(--light-press-highlight);
     --header-expanded: 38vh;
     --header-collapsed: 72px;
     --header-top-padding: 12px;
@@ -203,10 +216,24 @@ a:not(:any-link) {
 /* === index.css is imported above and contains all component/utility styles === */
 
 /* Decoration, readable links and filled controls have separate contrast roles. */
-:root, html[data-accent="blue"] { --accent-control: #1f54c7; --accent-link: #1f54c7; }
-html[data-accent="coral"] { --accent-control: #a82735; --accent-link: #a82735; }
-html[data-accent="mint"] { --accent-control: #126861; --accent-link: #126861; }
-html[data-accent="lilac"] { --accent-control: #633fad; --accent-link: #633fad; }
-html[data-accent="mono"] { --accent-control: #595959; --accent-link: #595959; }
+:root {
+    /* Filled controls retain at least 4.65:1 contrast with white labels. */
+    --accent-control-blue: #2f6deb;
+    --accent-control-coral: #cc434c;
+    --accent-control-mint: #21817a;
+    --accent-control-lilac: #8160cf;
+    --accent-control-mono: #747474;
+    /* Text links also need contrast against tinted light-theme surfaces. */
+    --accent-link-blue: #1f54c7;
+    --accent-link-coral: #a82735;
+    --accent-link-mint: #126861;
+    --accent-link-lilac: #633fad;
+    --accent-link-mono: #595959;
+}
+:root, html[data-accent="blue"] { --accent-control: var(--accent-control-blue); --accent-link: var(--accent-link-blue); }
+html[data-accent="coral"] { --accent-control: var(--accent-control-coral); --accent-link: var(--accent-link-coral); }
+html[data-accent="mint"] { --accent-control: var(--accent-control-mint); --accent-link: var(--accent-link-mint); }
+html[data-accent="lilac"] { --accent-control: var(--accent-control-lilac); --accent-link: var(--accent-link-lilac); }
+html[data-accent="mono"] { --accent-control: var(--accent-control-mono); --accent-link: var(--accent-link-mono); }
 html[data-theme="dark"] { --accent-link: var(--accent); }
-.discord-banner-text:any-link { color: inherit; text-decoration: underline; }
+.discord-banner-text:any-link { color: #fff; text-decoration: none; }

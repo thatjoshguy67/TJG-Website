@@ -21,23 +21,13 @@ const nextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   experimental: {
     inlineCss: false,
+    // Work around negative dev profiling timestamps (Next.js issue #86060)
+    // by keeping React debug info in the RSC stream instead of the WebSocket.
+    reactDebugChannel: false,
   },
   images: {
     qualities: [75, 90],
-    remotePatterns: [
-      { protocol: 'https', hostname: '*.wordpress.com' },
-      { protocol: 'https', hostname: '*.wp.com' },
-      { protocol: 'https', hostname: '*.gravatar.com' },
-      { protocol: 'https', hostname: 'joshskinnertjg.wordpress.com' },
-      { protocol: 'https', hostname: 'static.gumroad.com' },
-      { protocol: 'https', hostname: 'public-files.gumroad.com' },
-      { protocol: 'https', hostname: 'cdn.sanity.io' },
-      { protocol: 'https', hostname: 'sammyguru.com' },
-      { protocol: 'https', hostname: 'www.sammobile.com' },
-      { protocol: 'https', hostname: 'm-cdn.phonearena.com' },
-      { protocol: 'https', hostname: 'www.androidheadlines.com' },
-      { protocol: 'https', hostname: 'pbs.twimg.com', pathname: '/media/**' },
-    ],
+    remotePatterns: require('./lib/imageRemotePatterns.json'),
   },
   redirects: async () => [
     {
@@ -48,6 +38,11 @@ const nextConfig = {
     {
       source: '/work/oneui-design-kit',
       destination: '/blog/oneui-design-kit',
+      permanent: true,
+    },
+    {
+      source: '/twidget/privacy-policy',
+      destination: '/blog/twidget-privacy-policy',
       permanent: true,
     },
   ],

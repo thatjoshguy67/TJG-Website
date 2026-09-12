@@ -1,5 +1,6 @@
 "use client";
 import { localPreferences, sessionPreferences } from '../../lib/browserStorage';
+import { rememberSettingsReturnPath } from '../../lib/settingsNavigation';
 import Link from "next/link";
 import ShortcutPopover from "./ShortcutPopover";
 import { isKeyboardInput } from "../../lib/keyboard";
@@ -93,6 +94,7 @@ function DesktopNavButton({
   href,
   isSelected,
   indicatorManaged = false,
+  suppressHover = false,
   onClick,
   onNavigateIntent,
   tabRef,
@@ -101,6 +103,7 @@ function DesktopNavButton({
   href: string;
   isSelected: boolean;
   indicatorManaged?: boolean;
+  suppressHover?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
   onNavigateIntent?: () => void;
   tabRef?: (element: HTMLAnchorElement | null) => void;
@@ -113,6 +116,7 @@ function DesktopNavButton({
       href={href}
       prefetch={false}
       className={`${isSelected ? 'nav-icon-container-selected' : 'nav-icon-container'}${indicatorManaged ? ' desktop-nav-core-tab' : ''}`}
+      data-hover-suppressed={suppressHover || undefined}
       onClick={onClick}
       onFocus={onNavigateIntent}
       onMouseEnter={onNavigateIntent}
@@ -148,6 +152,9 @@ export default function NavigationClient({
   showBlog: propShowBlog = false
 }: NavigationClientProps) {
   const pathname = usePathname();
+  useEffect(() => {
+    rememberSettingsReturnPath(window.location.href);
+  }, [pathname]);
   const router = useRouter();
   const serverBlogEnabled = useBlogEnabled();
   const desktopNavRef = useRef<HTMLElement | null>(null);
@@ -186,6 +193,7 @@ export default function NavigationClient({
   const [desktopNavIsResizing, setDesktopNavIsResizing] = useState(false);
   const [desktopNavIsDragging, setDesktopNavIsDragging] = useState(false);
   const [optimisticDesktopNavIndex, setOptimisticDesktopNavIndex] = useState<number | null>(null);
+  const [hoverSuppressedDesktopNavIndex, setHoverSuppressedDesktopNavIndex] = useState<number | null>(null);
   const [desktopIndicatorLayout, setDesktopIndicatorLayout] = useState({
     left: 0,
     top: 0,
@@ -506,6 +514,20 @@ export default function NavigationClient({
     return observeDesktopNavLayout();
   }, [desktopNavCount, desktopNavIsResizing, desktopNavItems, displayedDesktopNavIndex, hideDesktop]);
 
+  useLayoutEffect(() => {
+    if (hoverSuppressedDesktopNavIndex === null || optimisticDesktopNavIndex !== null) return;
+
+    // A cached route can commit before the selection pill reaches its target.
+    // Wait for the actual animations, including reduced-motion/cancelled ones.
+    const indicator = desktopNavRef.current?.querySelector('.desktop-nav-indicator');
+    const animations = indicator?.getAnimations({ subtree: true }) ?? [];
+    let cancelled = false;
+    void Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+      if (!cancelled) setHoverSuppressedDesktopNavIndex(null);
+    });
+    return () => { cancelled = true; };
+  }, [desktopIndicatorState.animationKey, desktopIndicatorState.instant, hoverSuppressedDesktopNavIndex, optimisticDesktopNavIndex]);
+
   const mobileNavItems = useMemo(() => [
     {
       href: '/',
@@ -743,6 +765,7 @@ export default function NavigationClient({
 
   const handleDesktopNavClick = (event: MouseEvent<HTMLAnchorElement>, index: number) => {
     if (
+      event.defaultPrevented ||
       (typeof event.button === 'number' && event.button !== 0) ||
       event.metaKey ||
       event.altKey ||
@@ -753,6 +776,7 @@ export default function NavigationClient({
       return;
     }
 
+    setHoverSuppressedDesktopNavIndex(index);
     setOptimisticDesktopNavIndex(index);
   };
 
@@ -1061,6 +1085,7 @@ export default function NavigationClient({
                   href={item.href}
                   isSelected={isSelected}
                   indicatorManaged
+                  suppressHover={hoverSuppressedDesktopNavIndex === index}
                   tabRef={(element) => {
                     desktopNavItemRefs.current[index] = element;
                   }}

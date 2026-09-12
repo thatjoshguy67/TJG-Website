@@ -11,6 +11,14 @@ import DiscordPopup from './components/DiscordPopup';
 import Navigation from './components/Navigation';
 import type { Metadata } from 'next';
 import { getSiteContext } from '../lib/siteEdition';
+import { Google_Sans_Code } from 'next/font/google';
+
+const googleSansCode = Google_Sans_Code({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-mono',
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteContext();
@@ -67,7 +75,7 @@ export default async function RootLayout({
   ]);
   
   return (
-    <html lang="en" data-site-edition={site.edition} data-site-environment={site.environment} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className={googleSansCode.variable} data-site-edition={site.edition} data-site-environment={site.environment} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="theme-color" content="#000" />
@@ -190,7 +198,7 @@ export default async function RootLayout({
             <main className="site-main" id="main-content">
               {children}
             </main>
-            <DiscordPopup />
+            {site.edition !== 'college' && <DiscordPopup />}
           </BlogFlagProvider>
         </ThemeProvider>
         <Analytics />

@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import './NativeSlideshow.css';
+import { useEffect, useRef, useState } from 'react';
 
 export interface SlideData {
   src: string;
@@ -22,6 +23,40 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
   const activePointerIdRef = useRef<number | null>(null);
   const didDragRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const track = viewport?.firstElementChild;
+    if (!viewport || !track) return;
+    const updateEdges = () => {
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      const atStart = viewport.scrollLeft <= 4;
+      const atEnd = maxScroll - viewport.scrollLeft <= 4;
+      viewport.toggleAttribute('data-overflow-start', !atStart);
+      viewport.toggleAttribute('data-overflow-end', !atEnd);
+
+      if (atStart) { setActiveSlide(0); return; }
+      if (atEnd) { setActiveSlide(slides.length - 1); return; }
+      const anchor = viewport.getBoundingClientRect().left + parseFloat(getComputedStyle(viewport).scrollPaddingLeft);
+      let nearest = 0;
+      let distance = Infinity;
+      Array.from(track.children).forEach((slide, index) => {
+        const currentDistance = Math.abs(slide.getBoundingClientRect().left - anchor);
+        if (currentDistance < distance) { nearest = index; distance = currentDistance; }
+      });
+      setActiveSlide(nearest);
+    };
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(viewport);
+    observer.observe(track);
+    viewport.addEventListener('scroll', updateEdges, { passive: true });
+    updateEdges();
+    return () => {
+      observer.disconnect();
+      viewport.removeEventListener('scroll', updateEdges);
+    };
+  }, [slides]);
 
   if (slides.length === 0) return null;
 
@@ -105,6 +140,7 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
             >
               <Image
                 src={slide.src}
+                data-full={slide.src}
                 alt={slide.alt}
                 width={1200}
                 height={800}
@@ -118,6 +154,15 @@ export default function NativeSlideshow({ slides }: NativeSlideshowProps) {
               )}
             </figure>
           ))}
+        </div>
+      </div>
+      <div className="native-slideshow__indicators" role="group" aria-label={`Image ${Math.min(activeSlide + 1, slides.length)} of ${slides.length}`}>
+        <div className="native-slideshow__dots" aria-hidden="true">
+          {slides.map((slide, index) => <span
+            key={`${slide.src}-${index}`}
+            className="native-slideshow__dot"
+            data-active={index === activeSlide}
+          />)}
         </div>
       </div>
     </div>
