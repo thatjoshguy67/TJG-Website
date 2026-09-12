@@ -65,7 +65,12 @@ The updater installs `@notionhq/notion-mcp-server@2.5.1` before starting Codex.
 Its trusted configuration is written under the runner's temporary directory and
 forwards `NOTION_TOKEN` through the environment; the token is not embedded in the
 prompt or configuration file. Shell commands have read-only access, while the
-Notion MCP tools can update the wiki. This token-based server edits Notion blocks;
+Notion MCP tools can update the wiki. The server exposes only page/block reads,
+block updates/appends and page creation, with those tools pre-approved for the
+unattended job. Delete and move tools are not exposed. A separate verification
+job fails the workflow if Codex reports a blocked or incomplete update, including
+a missing verified checkpoint. JSON execution logs include token usage.
+This token-based server edits Notion blocks;
 it does not provide the hosted Notion MCP's Markdown `update_content` operation.
 
 To verify setup, run **Update Notion docs** manually on `main` or `beta` and check
