@@ -1,3 +1,4 @@
+import { cmsEmbedHtml } from './cmsEmbed';
 import { normalizeHtmlHeadings } from './headings';
 import { sanitizeBlogHtml } from './sanitizeBlogHtml';
 import { sanitizeBlogButtonHref } from './sanitizeBlogButtonHref';
@@ -58,7 +59,7 @@ const EMBED_MAP: Record<string, string> = {
 };
 
 export function getEmbedHtmlForKey(keyphrase: string): string | null {
-  return EMBED_MAP[keyphrase] ? sanitizeBlogHtml(EMBED_MAP[keyphrase]) : null;
+  return Object.hasOwn(EMBED_MAP, keyphrase) ? sanitizeBlogHtml(EMBED_MAP[keyphrase]) : cmsEmbedHtml(keyphrase);
 }
 
 export function countWords(content: string): number {
