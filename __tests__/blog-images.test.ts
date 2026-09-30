@@ -41,7 +41,7 @@ it('does not feed unconfigured hosts, vectors, or animation sources to the optim
   for (const src of ['https://example.com/image.png', 'https://cdn.sanity.io.evil.test/image.png', 'https://cdn.sanity.io:444/image.png', '/images/animation.gif', '/images/logo.svg', 'https://cdn.sanity.io/image.gif']) {
     expect(optimizedBlogImageAttributes(src)).toEqual({});
   }
-  expect(optimizedBlogImageAttributes('https://cdn.sanity.io/images/project/production/photo.png').src).toContain('/_next/image');
+  expect(optimizedBlogImageAttributes('https://cdn.sanity.io/images/project/production/photo.png')).toEqual({});
   expect(optimizedBlogImageAttributes('https://site.wordpress.com/image.png').src).toContain('/_next/image');
   expect(optimizedBlogImageAttributes('https://pbs.twimg.com/media/image.jpg').src).toContain('/_next/image');
   expect(optimizedBlogImageAttributes('https://pbs.twimg.com/other/image.jpg')).toEqual({});
@@ -57,4 +57,14 @@ it('discards supplied responsive URLs and unsafe originals while retaining safe 
 it('keeps later rich-text fragments lazy when the enclosing article has preceding media', () => {
   const [image] = imageTags(sanitizeBlogHtml('<img src="/images/projects/oneui-bento.png">', { prioritizeLeadingImage: false }));
   expect(image).toContain('loading="lazy"');
+});
+
+ it('serves uploaded Sanity images directly in legacy HTML without losing captions or loading behavior', () => {
+  const src = 'https://cdn.sanity.io/images/v4byl546/production/photo-1276x740.png?w=1200&q=75&auto=format';
+  const html = sanitizeBlogHtml(`<figure class="wp-block-image"><img src="${src}"><figcaption>Flight paths</figcaption></figure>`);
+  expect(html).toContain('src="https://cdn.sanity.io/images/v4byl546/production/photo-1276x740.png?w=1200&amp;q=75&amp;auto=format"');
+  expect(html).not.toContain('/_next/image');
+  expect(html).not.toContain('srcset=');
+  expect(html).toContain('loading="eager"');
+  expect(html).toContain('<figcaption>Flight paths</figcaption>');
 });

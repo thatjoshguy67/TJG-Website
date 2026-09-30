@@ -63,6 +63,7 @@ function PortableImage({ block, leading }: { block: PortableTextBlock; leading: 
       <div className="portable-image-frame">
         <Image
           src={src}
+          unoptimized
           data-full={src}
           loading={leading ? "eager" : "lazy"}
           fetchPriority={leading ? "high" : "auto"}
