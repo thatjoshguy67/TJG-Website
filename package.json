@@ -32,7 +32,7 @@
     "flags": "^4.3.0",
     "katex": "^0.18.10",
     "next": "^16.3.4",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "react-dom": "^19.2.8",
     "sanitize-html": "^2.17.7",
     "sharp": "^0.35.4"
@@ -43,7 +43,7 @@
     "@sanity/schema": "^6.12.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.4.1",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@types/react-dom": "^19.2.7",
     "@types/sanitize-html": "^2.16.1",
     "@typescript/native": "npm:typescript@^7.0.2",
