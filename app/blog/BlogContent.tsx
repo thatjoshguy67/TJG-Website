@@ -6,6 +6,7 @@ import { enhanceBlogMedia } from './enhanceBlogMedia';
 import WordCounter from './WordCounter';
 import type { SlideData } from './NativeSlideshow';
 import BlogButton from './BlogButton';
+import { useBlogMath } from './useBlogMath';
 
 const NativeSlideshow = dynamic(() => import('./NativeSlideshow'));
 
@@ -96,6 +97,7 @@ interface BlogContentProps {
 
 export default function BlogContent({ content }: BlogContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  useBlogMath(contentRef, content);
 
   const segments = useMemo(() => splitContentIntoSegments(content || ''), [content]);
 
