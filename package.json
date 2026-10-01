@@ -19,7 +19,7 @@
     "test:schemas": "tsx scripts/validate-schemas.ts"
   },
   "dependencies": {
-    "@flags-sdk/vercel": "^1.4.7",
+    "@flags-sdk/vercel": "^1.4.10",
     "@lisse/react": "^0.7.2",
     "@sanity/client": "^8.5.0",
     "@sanity/image-url": "^2.1.1",
@@ -29,13 +29,13 @@
     "@vercel/edge-config": "^1.5.1",
     "@vercel/flags-core": "^1.8.0",
     "@vercel/speed-insights": "^2.0.0",
-    "flags": "^4.3.0",
+    "flags": "^4.3.1",
     "katex": "^0.18.10",
-    "next": "^16.3.4",
+    "next": "^16.3.6",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sanitize-html": "^2.17.7",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.1",
@@ -50,10 +50,10 @@
     "axe-core": "^4.13.0",
     "esbuild": "^0.28.2",
     "eslint": "^10.10.0",
-    "eslint-config-next": "^16.3.4",
-    "jest": "^30.5.1",
+    "eslint-config-next": "^16.3.6",
+    "jest": "^30.5.2",
     "sanity": "^6.12.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.69.0"
   },
