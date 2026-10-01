@@ -31,7 +31,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "flags": "^4.3.0",
     "katex": "^0.18.10",
-    "next": "^16.3.4",
+    "next": "^16.3.6",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sanitize-html": "^2.17.7",
@@ -50,7 +50,7 @@
     "axe-core": "^4.13.0",
     "esbuild": "^0.28.2",
     "eslint": "^10.10.0",
-    "eslint-config-next": "^16.3.4",
+    "eslint-config-next": "^16.3.6",
     "jest": "^30.5.1",
     "sanity": "^6.12.0",
     "tsx": "^4.23.13",
@@ -77,6 +77,9 @@
     },
     "typeid-js": {
       "uuid": "^11.1.1"
+    },
+    "@module-federation/dts-plugin": {
+      "undici": "^7.29.1"
     }
   },
   "engines": {
