@@ -21,7 +21,7 @@
   "dependencies": {
     "@flags-sdk/vercel": "^1.4.7",
     "@lisse/react": "^0.7.2",
-    "@sanity/client": "^8.5.0",
+    "@sanity/client": "^8.6.1",
     "@sanity/image-url": "^2.1.1",
     "@sanity/webhook": "^4.0.4",
     "@thatjoshguy/oneui-icons": "^1.1.1",
