@@ -201,6 +201,18 @@
 
 .body-text .portable-image--intrinsic img { width: auto !important; }
 
+/* Article wrapping rules must not constrain KaTeX's positioned glyphs. */
+.body-text .katex * {
+  max-width: none !important;
+  overflow-wrap: normal !important;
+  word-wrap: normal !important;
+}
+.body-text .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 4px;
+}
+
 /* --- Jetpack Image Compare Slider --- */
 
 .body-text .ko-compare {

@@ -8,6 +8,7 @@ import { getSanityImageUrl, type SanityImageSource } from '../../lib/sanity';
 import type { PortableTextBlock, PortableTextMarkDef, PortableTextSpan } from '../../lib/portableText';
 import BlogButton from './BlogButton';
 import BlogContent from './BlogContent';
+import MathContent from './MathContent';
 
 interface PortableTextContentProps {
   blocks: PortableTextBlock[];
@@ -156,5 +157,5 @@ export default function PortableTextContent({ blocks }: PortableTextContentProps
     renderedBlocks.push(renderBlock(block, index, index === leadingImageIndex, heading));
     index++;
   }
-  return <div className="body-text portable-text">{renderedBlocks}</div>;
+  return <MathContent>{renderedBlocks}</MathContent>;
 }
