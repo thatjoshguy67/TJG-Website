@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { bypassShopImageOptimization } from '../../lib/shopImages';
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import { Download } from '@thatjoshguy/oneui-icons';
@@ -41,6 +42,7 @@ export function ShopContentCard({ product }: { product: GumroadProduct }) {
       <div className="shop-product-card-background">
         <Image
           src={product.imageUrl}
+          unoptimized={bypassShopImageOptimization(product.imageUrl)}
           alt=""
           fill
           sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 80vw, 40vw"
