@@ -4,6 +4,7 @@ import { getFeaturedStories } from "../lib/featured-stories";
 import { getProjects } from "../lib/projects";
 import { getPopularStoriesEnabled } from "../lib/getPopularStoriesFlag";
 import { getProjectsEnabled } from "../lib/getProjectsEnabledFlag";
+import { getTwidgetStoreButtonsEnabled } from "../lib/getTwidgetStoreButtonsFlag";
 import { getMiscSectionEnabled } from "../lib/getMiscSectionFlag";
 import { getRecentBlogPostsEnabled } from "../lib/getRecentBlogPostsFlag";
 import { getRecentBlogPosts } from "../lib/recent-blog-posts";
@@ -39,8 +40,9 @@ export default async function Home() {
 }
 
 async function HomeSections() {
-  const [popularStoriesEnabled, projectsEnabled, miscSectionEnabled, recentBlogPostsEnabled] = await Promise.all([
+  const [popularStoriesEnabled, projectsEnabled, miscSectionEnabled, recentBlogPostsEnabled, twidgetStoreButtonsEnabled] = await Promise.all([
     getPopularStoriesEnabled(), getProjectsEnabled(), getMiscSectionEnabled(), getRecentBlogPostsEnabled(),
+    getTwidgetStoreButtonsEnabled(),
   ]);
   const [featuredStories, projects, recentBlogPosts, profileFacts] = await Promise.all([
     popularStoriesEnabled ? getFeaturedStories() : Promise.resolve([]),
@@ -54,6 +56,7 @@ async function HomeSections() {
       projects={projects}
       popularStoriesEnabled={popularStoriesEnabled}
       projectsEnabled={projectsEnabled}
+      twidgetStoreButtonsEnabled={twidgetStoreButtonsEnabled}
       miscSectionEnabled={miscSectionEnabled}
       recentBlogPostsEnabled={recentBlogPostsEnabled}
       recentBlogPosts={recentBlogPosts}

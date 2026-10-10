@@ -19,43 +19,43 @@
     "test:schemas": "tsx scripts/validate-schemas.ts"
   },
   "dependencies": {
-    "@flags-sdk/vercel": "^1.4.7",
+    "@flags-sdk/vercel": "^1.5.1",
     "@lisse/react": "^0.7.2",
-    "@sanity/client": "^8.5.0",
+    "@sanity/client": "^8.9.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/webhook": "^4.0.4",
     "@thatjoshguy/oneui-icons": "^1.1.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/edge-config": "^1.5.1",
-    "@vercel/flags-core": "^1.8.0",
+    "@vercel/flags-core": "^1.10.0",
     "@vercel/speed-insights": "^2.0.0",
-    "flags": "^4.3.0",
-    "katex": "^0.18.10",
-    "next": "^16.3.6",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "sanitize-html": "^2.17.7",
-    "sharp": "^0.35.4"
+    "flags": "^4.3.1",
+    "katex": "^0.19.0",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sanitize-html": "^2.18.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.1",
-    "@playwright/test": "^1.63.0",
-    "@sanity/schema": "^6.12.0",
+    "@playwright/test": "^1.64.0",
+    "@sanity/schema": "^6.18.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^26.4.1",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
-    "@types/sanitize-html": "^2.16.1",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/sanitize-html": "^2.16.2",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "axe-core": "^4.13.0",
+    "axe-core": "^4.14.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.10.0",
-    "eslint-config-next": "^16.3.6",
-    "jest": "^30.5.1",
-    "sanity": "^6.12.0",
-    "tsx": "^4.23.13",
+    "eslint": "^10.12.0",
+    "eslint-config-next": "^16.4.0",
+    "jest": "^30.5.2",
+    "sanity": "^6.18.0",
+    "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "typescript-eslint": "^8.69.0"
+    "typescript-eslint": "^8.71.1"
   },
   "overrides": {
     "adm-zip": "0.6.1",
@@ -68,12 +68,12 @@
     "eslint-plugin-import": {
       "eslint": "$eslint"
     },
-    "postcss": "^8.5.23",
+    "postcss": "^8.5.29",
     "sharp": "$sharp",
-    "ws": "8.21.0",
+    "ws": "8.22.0",
     "@vercel/frameworks": {
       "js-yaml": "^3.15.2",
-      "smol-toml": "^1.6.1"
+      "smol-toml": "^1.9.1"
     },
     "typeid-js": {
       "uuid": "^11.1.1"
