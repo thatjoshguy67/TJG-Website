@@ -425,7 +425,11 @@ function StoryCard({ story }: { story: FeaturedStory }) {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
+function ProjectCard({ project, twidgetStoreButtonsEnabled = false }: {
+  project: Project;
+  twidgetStoreButtonsEnabled?: boolean;
+}) {
+  const showStoreButtons = twidgetStoreButtonsEnabled && project.title.toLowerCase() === 'twidget';
   const [copied, setCopied] = useState(false);
   const actionLabel =
     project.action === "copy-current-url"
@@ -503,7 +507,7 @@ function ProjectCard({ project }: { project: Project }) {
   return (
     <SmoothHoverCard corners={PROJECT_CARD_CORNERS}>
       <article
-        className={`design-project-card project-app-card project-app-card--${project.tone}`}
+        className={`design-project-card project-app-card project-app-card--${project.tone}${showStoreButtons ? ' project-app-card--store-buttons' : ''}`}
       >
         <div className="design-project-thumbnail">
           <Image
@@ -533,7 +537,32 @@ function ProjectCard({ project }: { project: Project }) {
             <h3 className="project-app-card-title">{project.title}</h3>
             <p className="project-app-card-description">{project.description}</p>
           </div>
-          {action}
+          {showStoreButtons ? (
+            <div className="project-app-card-actions">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.tjg.twidget"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-app-card-action"
+                aria-label="Get Twidget on Google Play"
+                title="Get Twidget on Google Play"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Image src="/images/home/projects/action-google-play.svg" alt="" width={24} height={24} className="project-app-card-store-icon" />
+              </a>
+              <a
+                href={project.bodyUrl ?? project.actionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-app-card-action"
+                aria-label="View Twidget on GitHub"
+                title="View Twidget on GitHub"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Image src="/images/home/projects/action-github.svg" alt="" width={24} height={24} className="project-app-card-store-icon" />
+              </a>
+            </div>
+          ) : action}
         </div>
       </article>
     </SmoothHoverCard>
@@ -572,6 +601,7 @@ export default function HomeClient({
   projects = [],
   popularStoriesEnabled = true,
   projectsEnabled = true,
+  twidgetStoreButtonsEnabled = false,
   miscSectionEnabled = true,
   recentBlogPostsEnabled = true,
   recentBlogPosts = [],
@@ -581,6 +611,7 @@ export default function HomeClient({
   projects?: Project[];
   popularStoriesEnabled?: boolean;
   projectsEnabled?: boolean;
+  twidgetStoreButtonsEnabled?: boolean;
   miscSectionEnabled?: boolean;
   recentBlogPostsEnabled?: boolean;
   recentBlogPosts?: RecentBlogPost[];
@@ -781,7 +812,7 @@ export default function HomeClient({
             <EdgeMaskedCarousel className="design-projects-scroll">
               <div className="design-projects-scroll-inner">
                 {projects.map((project, index) => (
-                  <ProjectCard key={index} project={project} />
+                  <ProjectCard key={index} project={project} twidgetStoreButtonsEnabled={twidgetStoreButtonsEnabled} />
                 ))}
               </div>
             </EdgeMaskedCarousel>

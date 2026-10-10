@@ -1954,6 +1954,34 @@ html[data-theme="dark"] .hero-theme-asset-dark {
   object-fit: contain;
 }
 
+.project-app-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.project-app-card-actions .project-app-card-action {
+  width: 44px;
+  flex: 0 0 32px;
+  background: rgba(252, 252, 255, 0.6);
+}
+
+.project-app-card-actions .project-app-card-action:hover,
+.project-app-card-actions .project-app-card-action:focus-visible {
+  background: rgba(252, 252, 255, 0.92);
+}
+
+.project-app-card-store-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.project-app-card--store-buttons .project-app-card-copy {
+  gap: 7px;
+}
+
 /* =============================================
    Stack Section (enhanced from section)
    ============================================= */

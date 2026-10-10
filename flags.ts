@@ -30,6 +30,17 @@ export const projectsEnabled = flag({
   ],
 });
 
+export const twidgetStoreButtonsEnabled = flag({
+  key: 'twidget-store-buttons-enabled',
+  adapter: vercelAdapter(),
+  defaultValue: false,
+  description: 'Show Google Play and GitHub buttons on the Twidget carousel card',
+  options: [
+    { value: true, label: 'Enabled' },
+    { value: false, label: 'Disabled' },
+  ],
+});
+
 /**
  * Popular Stories feature flag - controls visibility of the Popular Stories section on the home page.
  */
