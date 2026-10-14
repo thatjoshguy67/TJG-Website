@@ -53,8 +53,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      site: '@thatjoshguy69',
-      creator: '@thatjoshguy69',
+      site: '@thatjoshguy',
+      creator: '@thatjoshguy',
       title,
       description,
       images: ['/images/preview.png']

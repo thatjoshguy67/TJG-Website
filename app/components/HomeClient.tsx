@@ -680,7 +680,7 @@ export default function HomeClient({
             I&apos;ve recreated One UI&apos;s design system in Figma with the <Link href="/blog/oneui-design-kit">One UI Design Kit</Link>, letting enthusiasts and developers create native looking interfaces.
           </p>
           <p className="about-text">
-            In early 2026, I leaked animations on how the <a href="https://sammyguru.com/galaxy-s26-ultra-privacy-display-animation/" target="_blank" rel="noopener noreferrer">Galaxy S26 Ultra&apos;s Privacy Display</a> worked, showed off <a href="https://sammyguru.com/exclusive-samsung-internet-gets-massive-redesign-in-one-ui-8-0/" target="_blank" rel="noopener noreferrer">Samsung Internet&apos;s redesign</a> in Nov 2025, and was first to share the update artwork for <a href="https://x.com/thatjoshguy69" target="_blank" rel="noopener noreferrer">One UI 9.5</a>.
+            In early 2026, I leaked animations on how the <a href="https://sammyguru.com/galaxy-s26-ultra-privacy-display-animation/" target="_blank" rel="noopener noreferrer">Galaxy S26 Ultra&apos;s Privacy Display</a> worked, showed off <a href="https://sammyguru.com/exclusive-samsung-internet-gets-massive-redesign-in-one-ui-8-0/" target="_blank" rel="noopener noreferrer">Samsung Internet&apos;s redesign</a> in Nov 2025, and was first to share the update artwork for <a href="https://x.com/thatjoshguy" target="_blank" rel="noopener noreferrer">One UI 9.5</a>.
           </p>
           <p className="about-text">
             I also review the latest and greatest Samsung tech for <a href="https://sammyguru.com/author/josh_skinner/" target="_blank" rel="noopener noreferrer">SammyGuru</a>, and dig through Samsung&apos;s applications for signs of unreleased hardware and new features.
