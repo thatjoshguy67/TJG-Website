@@ -18,7 +18,7 @@ const socialLinks = [
   },
   {
     label: "X",
-    href: "https://x.com/thatjoshguy69",
+    href: "https://x.com/thatjoshguy",
     icon: "/images/footer/x.png",
   },
 ] as const;

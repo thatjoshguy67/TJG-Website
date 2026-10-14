@@ -60,7 +60,7 @@ export default function Contact() {
                   <h2 className="title">Hit me up</h2>
                 </div>
                 <div className="list-group">
-                  <a href="https://twitter.com/thatjoshguy69" className="list" target="_blank" rel="noopener noreferrer">
+                  <a href="https://x.com/thatjoshguy" className="list" target="_blank" rel="noopener noreferrer">
                     <div className="list-item-icon">
                       {/* Twitter SVG */}
                       <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -70,7 +70,7 @@ export default function Contact() {
                     <div className="list-item-content">
                       <div className="body-text">Twitter</div>
                       <div className="information-wrapper">
-                        <div className="information">@thatjoshguy69</div>
+                        <div className="information">@thatjoshguy</div>
                       </div>
                     </div>
                     <div className="list-item-chevron">
