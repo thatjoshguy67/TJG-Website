@@ -40,7 +40,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.1",
     "@playwright/test": "^1.64.0",
-    "@sanity/schema": "^6.18.0",
+    "@sanity/schema": "^6.19.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
