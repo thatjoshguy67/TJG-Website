@@ -1,5 +1,6 @@
 import 'server-only';
 import sanitizeHtml from 'sanitize-html';
+import { iconTags, iconAttributes, filterIconAttributes } from './calloutSvg';
 import { optimizedBlogImageAttributes, LEADING_IMAGE_TEXT_LIMIT } from './blogImages';
 import { safeContentHref, safeEmbedHref, embedTitle } from './contentUrls';
 /** Normalize rich content before SSR, preserving permitted media and layout. */
@@ -19,8 +20,11 @@ export function sanitizeBlogHtml(html: string, { prioritizeLeadingImage = true }
       precedingTextLength += text.trim().length;
       return text;
     },
-    allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img', 'iframe', 'video', 'audio', 'source', 'track', 'figure', 'figcaption'],
+    parser: { lowerCaseTags: false, lowerCaseAttributeNames: false, recognizeSelfClosing: true },
+    allowedTags: [...sanitizeHtml.defaults.allowedTags, ...iconTags, 'img', 'iframe', 'video', 'audio', 'source', 'track', 'figure', 'figcaption'],
     allowedAttributes: {
+      ...iconAttributes,
+      aside: ['aria-label'],
       '*': ['class', 'id', 'style', 'title', 'lang', 'dir'],
       a: ['href', 'target', 'rel', 'data-src', 'data-iframe-src'],
       img: ['src', 'alt', 'width', 'height', 'loading', 'decoding', 'fetchpriority', 'data-full', 'srcset', 'sizes'],
@@ -31,9 +35,14 @@ export function sanitizeBlogHtml(html: string, { prioritizeLeadingImage = true }
       td: ['colspan', 'rowspan'], th: ['colspan', 'rowspan', 'scope'], ol: ['start', 'reversed'],
     },
     allowedSchemes: ['https', 'http', 'mailto', 'tel'], allowProtocolRelative: false,
-    allowedStyles: { '*': Object.fromEntries(['width', 'height', 'max-width', 'max-height', 'min-height', 'aspect-ratio', 'object-fit', 'text-align', 'font-weight', 'font-style', 'text-decoration', 'margin', 'margin-top', 'margin-bottom', 'padding', 'border', 'border-radius', 'display', 'gap', 'grid-template-columns', 'flex-basis', 'vertical-align'].map(p => [p, [/^(?!.*(?:url|expression|@|\\)).+$/i]])) },
+    allowedStyles: { '*': Object.fromEntries(['width', 'height', 'max-width', 'max-height', 'min-height', 'aspect-ratio', 'object-fit', 'text-align', 'font-weight', 'font-style', 'text-decoration', 'margin', 'margin-top', 'margin-bottom', 'padding', 'border', 'border-radius', 'display', 'gap', 'grid-template-columns', 'flex-basis', 'vertical-align', 'white-space'].map(p => [p, [/^(?!.*(?:url|expression|@|\\)).+$/i]])) },
     transformTags: { '*': (tagName, attributes) => {
+      if (iconTags.includes(tagName)) return { tagName, attribs: filterIconAttributes(tagName, attributes) };
       const a = { ...attributes };
+      // Existing Admin callouts are legacy HTML with this accessible tone label.
+      if (tagName === 'aside' && /^(info|tip|warning) callout$/.test(a['aria-label'] || '')) {
+        a.class = `blog-callout blog-callout--${a['aria-label'].split(' ')[0]}`;
+      }
       if (a.id) { const base = a.id; let n = 2; while (ids.has(a.id)) a.id = `${base}-${n++}`; ids.add(a.id); }
       if (tagName === 'a') {
         a.href = safeContentHref(a.href || '');

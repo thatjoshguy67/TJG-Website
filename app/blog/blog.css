@@ -1569,3 +1569,19 @@ body.post-reading-compact .body-text .content-heading-h3 { font-size: 20px !impo
 @media (max-width: 699px) and (prefers-reduced-motion: reduce) {
   .post-search-bar, .post-search-bar > :not(.post-search-icon) { transition: none; }
 }
+
+/* Native Studio callouts and existing Admin HTML use the same presentation. */
+.body-text .blog-callout {
+  --callout-color: #5188c9;
+  border-left: 4px solid var(--callout-color);
+  background: color-mix(in srgb, var(--callout-color) 10%, transparent);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  overflow-wrap: anywhere;
+}
+.body-text .blog-callout--tip { --callout-color: #36966b; }
+.body-text .blog-callout--warning { --callout-color: #bd8529; }
+.body-text .blog-callout-icon { display: inline-flex; vertical-align: middle; margin-right: 0.65rem; }
+.body-text .blog-callout svg { width: 24px; height: 24px; vertical-align: middle; }
+.body-text .blog-callout p { white-space: pre-wrap; margin: 0.5rem 0 0; }

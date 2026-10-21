@@ -1,3 +1,4 @@
+import { calloutHtml } from '../../lib/callout';
 import { uniqueHeadingId } from '../../lib/headings';
 import { safeContentHref } from '../../lib/contentUrls';
 import Image from 'next/image';
@@ -82,6 +83,10 @@ function PortableImage({ block, leading }: { block: PortableTextBlock; leading: 
 
 function renderBlock(block: PortableTextBlock, index: number, leading: boolean, heading?: { id: string; level: number }) {
   const key = block._key || index;
+
+  if (block._type === 'callout') {
+    return <div key={key} dangerouslySetInnerHTML={{ __html: calloutHtml(block) }} />;
+  }
 
   if (block._type === 'image') {
     return <PortableImage key={key} block={block} leading={leading} />;

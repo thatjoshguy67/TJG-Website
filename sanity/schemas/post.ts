@@ -101,6 +101,26 @@ export default defineType({
       title: 'Body (Portable Text)',
       type: 'array',
       of: [
+        defineField({
+          name: 'callout', title: 'Callout', type: 'object',
+          initialValue: { tone: 'info', title: '' },
+          fields: [
+            defineField({ name: 'tone', title: 'Tone', type: 'string', initialValue: 'info',
+              options: { list: [{ title: 'Information', value: 'info' }, { title: 'Tip', value: 'tip' }, { title: 'Warning', value: 'warning' }] },
+              validation: (rule) => rule.required().custom((value) => ['info', 'tip', 'warning'].includes(value || '') ? true : 'Choose a callout tone.') }),
+            defineField({ name: 'title', title: 'Title', type: 'string' }),
+            defineField({ name: 'text', title: 'Body', type: 'text', rows: 4,
+              validation: (rule) => rule.required().custom((value) => typeof value === 'string' && value.trim().length > 0 ? true : 'Enter a callout message.') }),
+            defineField({ name: 'icon', title: 'Icon (optional)', type: 'object', fields: [
+              defineField({ name: 'name', title: 'Icon name', type: 'string', validation: (rule) => rule.max(100) }),
+              defineField({ name: 'svg', title: 'SVG', type: 'text', rows: 5,
+                description: 'Paste an SVG icon. Only inert shapes are displayed on the website.',
+                validation: (rule) => rule.max(50000) }),
+            ] }),
+          ],
+          preview: { select: { title: 'title', text: 'text', tone: 'tone' },
+            prepare: ({ title, text, tone }) => ({ title: title || 'Callout', subtitle: `${tone || 'info'} — ${text || 'No message'}` }) },
+        }),
         { type: 'block' },
         {
           type: 'image',
