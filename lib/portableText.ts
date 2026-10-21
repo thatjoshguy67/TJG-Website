@@ -28,6 +28,10 @@ export type PortableTextBlock = {
   embedKey?: string;
   url?: string;
   html?: string;
+  tone?: 'info' | 'tip' | 'warning';
+  title?: string;
+  text?: string;
+  icon?: { name?: string; svg?: string };
 };
 
 export function portableTextToPlainText(blocks?: PortableTextBlock[] | null): string {
@@ -38,6 +42,7 @@ export function portableTextToPlainText(blocks?: PortableTextBlock[] | null): st
       if (Array.isArray(block.children)) {
         return block.children.map((child) => child.text || '').join('');
       }
+      if (block._type === 'callout') return [block.title, block.text].filter(Boolean).join('\n');
       return block.caption || block.label || block.embedKey || block.url || '';
     })
     .filter(Boolean)
