@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Twidget store actions follow the flag and fit desktop and mobile cards', async ({ page, context, baseURL }) => {
+test('Twidget store actions follow the flag and fit desktop and mobile cards', async ({ page, context, baseURL }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const override = async (value: boolean) => {
@@ -50,7 +50,7 @@ test('Twidget store actions follow the flag and fit desktop and mobile cards', a
     expect(githubBox.y - (playBox.y + playBox.height)).toBeCloseTo(12, 0);
     expect(githubBox.x + githubBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
     expect(githubBox.y + githubBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height);
-    await card.screenshot({ path: `/private/tmp/twidget-card-${width}.png` });
+    await card.screenshot({ path: testInfo.outputPath(`twidget-card-${width}.png`) });
   }
 
   await page.goto('/settings/feature-flags');
