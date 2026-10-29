@@ -3,8 +3,10 @@ import { ShopContentCard } from "../components/ContentCards";
 import { fetchGumroadProducts } from "../../lib/gumroad-server";
 import TopAppBar from "../components/TopAppBar";
 import { Shopping } from "@thatjoshguy/oneui-icons";
+import { connection } from 'next/server';
 
 export default async function Shop() {
+  await connection();
   const result = await fetchGumroadProducts().then(products => ({ products, unavailable: false })).catch(() => { console.error('Shop catalogue unavailable'); return { products: [], unavailable: true }; });
   const { products, unavailable } = result;
 

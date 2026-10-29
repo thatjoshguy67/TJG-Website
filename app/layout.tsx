@@ -17,6 +17,8 @@ const googleSansCode = Google_Sans_Code({
   subsets: ['latin'],
   style: ['normal', 'italic'],
   display: 'swap',
+  adjustFontFallback: false,
+  fallback: ['monospace'],
   variable: '--font-mono',
 });
 
